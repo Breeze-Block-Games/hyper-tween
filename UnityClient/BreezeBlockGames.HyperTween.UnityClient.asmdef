@@ -1,10 +1,9 @@
 {
-    "name": "BreezeBlockGames.PackageBase.UnityClient.Installers",
-    "rootNamespace": "BreezeBlockGames.PackageBase.UnityClient.Installers",
+    "name": "BreezeBlockGames.HyperTween.UnityClient",
+    "rootNamespace": "BreezeBlockGames.HyperTween.UnityClient",
     "references": [
-        "BreezeBlockGames.PackageBase.UnityClient",
-        "BreezeBlockGames.DependencyInjection.UnityShared",
-        "VContainer"
+        "BreezeBlockGames.HyperTween.Shared",
+        "BreezeBlockGames.HyperTween.UnityShared"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

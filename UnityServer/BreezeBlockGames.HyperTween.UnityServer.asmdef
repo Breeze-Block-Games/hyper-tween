@@ -1,9 +1,9 @@
 {
-    "name": "BreezeBlockGames.PackageBase.UnityClient",
-    "rootNamespace": "BreezeBlockGames.PackageBase.UnityClient",
+    "name": "BreezeBlockGames.HyperTween.UnityServer",
+    "rootNamespace": "BreezeBlockGames.HyperTween.UnityServer",
     "references": [
-        "BreezeBlockGames.PackageBase.Shared",
-        "BreezeBlockGames.PackageBase.UnityShared"
+        "BreezeBlockGames.HyperTween.Shared",
+        "BreezeBlockGames.HyperTween.UnityShared"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -12,7 +12,7 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [
-        "!UNITY_SERVER"
+        "UNITY_SERVER"
     ],
     "versionDefines": [],
     "noEngineReferences": false

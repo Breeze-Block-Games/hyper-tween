@@ -1,9 +1,9 @@
 {
-    "name": "BreezeBlockGames.PackageBase.UnityShared.Installers",
-    "rootNamespace": "BreezeBlockGames.PackageBase.UnityShared.Installers",
+    "name": "BreezeBlockGames.HyperTween.UnityShared.Installers",
+    "rootNamespace": "BreezeBlockGames.HyperTween.UnityShared.Installers",
     "references": [
-        "BreezeBlockGames.PackageBase.Shared",
-        "BreezeBlockGames.PackageBase.UnityShared",
+        "BreezeBlockGames.HyperTween.Shared",
+        "BreezeBlockGames.HyperTween.UnityShared",
         "BreezeBlockGames.DependencyInjection.UnityShared",
         "VContainer"
     ],

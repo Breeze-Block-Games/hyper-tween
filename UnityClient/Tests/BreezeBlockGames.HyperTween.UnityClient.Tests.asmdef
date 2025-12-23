@@ -1,9 +1,8 @@
 {
-    "name": "BreezeBlockGames.PackageBase.Editor.Tests",
-    "rootNamespace": "BreezeBlockGames.PackageBase.Editor.Tests",
+    "name": "BreezeBlockGames.HyperTween.UnityClient.Tests",
+    "rootNamespace": "BreezeBlockGames.HyperTween.UnityClient.Tests",
     "references": [
-        "BreezeBlockGames.PackageBase.Shared",
-        "BreezeBlockGames.PackageBase.Unity.Shared"
+        "BreezeBlockGames.HyperTween.UnityClient"
     ],
     "includePlatforms": [
         "Editor"
