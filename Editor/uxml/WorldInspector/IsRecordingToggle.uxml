@@ -1,0 +1,6 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
+    <Style src="project://database/Packages/com.breezeblockgames.hyper-tween/Editor/uss/TweenGraphVisualizer.uss?fileID=7433441132597879392&amp;guid=ae644316570a5e34fb8e5fe9d719476e&amp;type=3#TweenGraphVisualizer"/>
+    <BreezeBlockGames.HyperTween.Editor.VisualElements.IsRecordingToggle prefs-key="TweenJournalIsRecording" style="align-items: auto; align-self: flex-start;">
+        <ui:Toggle/>
+    </BreezeBlockGames.HyperTween.Editor.VisualElements.IsRecordingToggle>
+</ui:UXML>

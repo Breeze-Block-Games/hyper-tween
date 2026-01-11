@@ -2,11 +2,16 @@
     "name": "BreezeBlockGames.HyperTween.UnityShared",
     "rootNamespace": "BreezeBlockGames.HyperTween.UnityShared",
     "references": [
-        "BreezeBlockGames.HyperTween.Shared"
+        "BreezeBlockGames.HyperTween.Shared",
+        "Unity.Burst",
+        "Unity.Entities",
+        "Unity.Mathematics",
+        "Unity.Transforms",
+        "Unity.Collections"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
-    "allowUnsafeCode": false,
+    "allowUnsafeCode": true,
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,

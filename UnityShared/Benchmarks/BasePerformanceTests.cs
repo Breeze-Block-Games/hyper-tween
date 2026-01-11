@@ -1,0 +1,259 @@
+#if UNITY_INCLUDE_TESTS
+using System;
+using System.Collections;
+using System.Linq;
+using NUnit.Framework;
+using Unity.Collections;
+using Unity.Entities;
+using Unity.Mathematics;
+using Unity.PerformanceTesting;
+using Unity.Profiling;
+using Unity.Transforms;
+using UnityEngine;
+using UnityEngine.TestTools;
+using Object = UnityEngine.Object;
+
+namespace BreezeBlockGames.HyperTween.UnityShared.Tests
+{
+    [TestFixture]
+    public abstract class BasePerformanceTests
+    {
+        private const float TweenDuration = 10f;
+        
+        [Test, Performance]
+        public void ManagedTransform_Create([Values(1, 10, 100, 1000, 10000)]int numTweens)
+        {
+            World? world = null;
+            var transforms = new Transform[numTweens];
+
+            using var positions = new NativeArray<float3>(numTweens, Allocator.TempJob);
+            CreatePositions(positions);
+            
+            Measure.Method(() =>
+                {
+                    using var profilerMarker = new ProfilerMarker("Create").Auto();
+                    using var gcAllocSampler = new GCAllocSampler();
+                    
+                    CreateTransformTweens(world!, transforms, positions, TweenDuration);
+                })
+                .SetUp(() =>
+                {
+                    world = CreateWorld();
+                    CreateTransforms(transforms);
+                })
+                .CleanUp(() =>
+                {
+                    Dispose();
+                    world?.Dispose();
+                    DestroyTransforms(transforms);
+                })
+                .WarmupCount(5)
+                .IterationsPerMeasurement(1)
+                .MeasurementCount(30)
+                .Run();
+        }
+        
+        [UnityTest, Performance]
+        public IEnumerator ManagedTransform_Update([Values(1, 10, 100, 1000, 10000)]int numTweens)
+        {
+            using var world = CreateWorld();
+
+            Transform[] transforms;
+            {
+                using var positions = new NativeArray<float3>(numTweens, Allocator.TempJob);
+                CreatePositions(positions);
+
+                transforms = new Transform[numTweens];
+                CreateTransforms(transforms);
+                
+                CreateTransformTweens(world, transforms, positions, TweenDuration);
+            }
+
+            var sampleGroups = GetUpdateProfileMarkers()
+                .Select(s => new SampleGroup(s, SampleUnit.Nanosecond))
+                .ToArray();
+
+            yield return new WaitForSeconds(1f);
+            
+            using var profileMarkers = Measure.ProfilerMarkers(sampleGroups);
+
+            yield return new WaitForSeconds(5f);
+
+            Dispose();
+            DestroyTransforms(transforms);
+        }
+
+        [Test, Performance]
+        public void DirectUnmanagedTransform_Create([Values(1, 10, 100, 1000, 10000, 100000)]int numTweens)
+        {
+            World? world = null;
+
+            using var entities = new NativeArray<Entity>(numTweens, Allocator.TempJob);
+            
+            using var positions = new NativeArray<float3>(numTweens, Allocator.TempJob);
+            CreatePositions(positions);
+            
+            Measure
+                .Method(() =>
+                {
+                    using var profilerMarker = new ProfilerMarker("Create").Auto();
+                    using var gcAllocSampler = new GCAllocSampler();
+                    
+                    CreateDirectLocalTransformTweens(world!, entities, positions, TweenDuration);
+                })
+                .SetUp(() =>
+                {
+                    world = CreateWorld();
+                    CreateEntities(world, entities);
+                })
+                .CleanUp(() =>
+                {
+                    world?.Dispose();
+                    Dispose();
+                })
+                .WarmupCount(5)
+                .IterationsPerMeasurement(1)
+                .MeasurementCount(30)
+                .Run();
+        }
+
+        [UnityTest, Performance]
+        public IEnumerator DirectUnmanagedTransform_Update([Values(1, 10, 100, 1000, 10000, 100000)]int numTweens)
+        {
+            using var world = CreateWorld();
+
+            {
+                using var entities = new NativeArray<Entity>(numTweens, Allocator.TempJob);
+                CreateEntities(world, entities);
+
+                using var positions = new NativeArray<float3>(numTweens, Allocator.TempJob);
+                CreatePositions(positions);
+
+                CreateDirectLocalTransformTweens(world, entities, positions, TweenDuration);
+            }
+            
+            var sampleGroups = GetUpdateProfileMarkers()
+                .Select(s => new SampleGroup(s, SampleUnit.Nanosecond))
+                .ToArray();
+
+            yield return new WaitForSeconds(1f);
+            
+            using var profileMarkers = Measure.ProfilerMarkers(sampleGroups);
+
+            yield return new WaitForSeconds(5f);
+            
+            Dispose();
+        }
+        
+        [Test, Performance]
+        public void IndirectUnmanagedTransform_Create([Values(1, 10, 100, 1000, 10000, 100000)]int numTweens)
+        {
+            World? world = null;
+            
+            using var entities = new NativeArray<Entity>(numTweens, Allocator.TempJob);
+            
+            using var positions = new NativeArray<float3>(numTweens, Allocator.TempJob);
+            CreatePositions(positions);
+            
+            // ReSharper disable once AccessToDisposedClosure
+            Measure.Method(() =>
+                {
+                    using var profilerMarker = new ProfilerMarker("Create").Auto();
+                    using var gcAllocSampler = new GCAllocSampler();
+                    
+                    CreateIndirectLocalTransformTweens(world!, entities, positions, TweenDuration);
+                })
+                .SetUp(() =>
+                {
+                    world = CreateWorld();
+                    CreateEntities(world, entities);
+                })
+                .CleanUp(() =>
+                {
+                    world?.Dispose();
+                    Dispose();
+                })
+                .WarmupCount(5)
+                .IterationsPerMeasurement(1)
+                .MeasurementCount(30)
+                .Run();
+        }
+
+        [UnityTest, Performance]
+        public IEnumerator IndirectUnmanagedTransform_Update([Values(1, 10, 100, 1000, 10000, 100000)]int numTweens)
+        {
+            using var world = CreateWorld();
+            
+            {
+                using var entities = new NativeArray<Entity>(numTweens, Allocator.TempJob);
+                CreateEntities(world, entities);
+
+                using var positions = new NativeArray<float3>(numTweens, Allocator.TempJob);
+                CreatePositions(positions);
+
+                CreateIndirectLocalTransformTweens(world, entities, positions, TweenDuration);
+            }
+            
+            var sampleGroups = GetUpdateProfileMarkers()
+                .Select(s => new SampleGroup(s, SampleUnit.Nanosecond))
+                .ToArray();
+
+            yield return new WaitForSeconds(1f);
+            
+            using var profileMarkers = Measure.ProfilerMarkers(sampleGroups);
+
+            yield return new WaitForSeconds(5f);
+
+            Dispose();
+        }
+        
+        private static void CreateTransforms(Transform[] outTransforms)
+        {
+            for (var i = 0; i < outTransforms.Length; i++)
+            {
+                outTransforms[i] = GameObject.CreatePrimitive(PrimitiveType.Cube).transform;
+            }
+        }
+        
+        private static void CreatePositions(NativeArray<float3> outPositions)
+        {
+            var random = new Unity.Mathematics.Random(123);
+            for (var i = 0; i < outPositions.Length; i++)
+            {
+                outPositions[i] = random.NextFloat3();
+            }
+        }
+        
+        private static void DestroyTransforms(Transform[] transforms)
+        {
+            for (var i = 0; i < transforms.Length; i++)
+            {
+                Object.Destroy(transforms[i].gameObject);
+            }
+        }
+        
+        private static void CreateEntities(World world, NativeArray<Entity> outEntities)
+        {
+            if (world == null)
+            {
+                throw new NotImplementedException();
+            }
+            
+            for (var i = 0; i < outEntities.Length; i++)
+            {
+                var entity = world.EntityManager.CreateEntity();
+                world.EntityManager.AddComponent<LocalTransform>(entity);
+
+                outEntities[i] = entity;
+            }
+        }
+
+        protected abstract World CreateWorld();
+        protected abstract void CreateTransformTweens(World world, Transform[] transforms, NativeArray<float3> positions, float duration);
+        protected abstract void CreateDirectLocalTransformTweens(World world, NativeArray<Entity> entities, NativeArray<float3> positions, float duration);
+        protected abstract void CreateIndirectLocalTransformTweens(World world, NativeArray<Entity> entities, NativeArray<float3> positions, float duration);
+        protected abstract string[] GetUpdateProfileMarkers();
+        protected abstract void Dispose();
+    }
+}
+#endif

@@ -2,17 +2,43 @@
     "name": "BreezeBlockGames.HyperTween.UnityShared.Tests",
     "rootNamespace": "BreezeBlockGames.HyperTween.UnityShared.Tests",
     "references": [
-        "BreezeBlockGames.HyperTween.UnityShared"
+        "BreezeBlockGames.HyperTween.UnityShared",
+        "Unity.Collections",
+        "Unity.Entities",
+        "Unity.Mathematics",
+        "Unity.PerformanceTesting",
+        "Unity.Transforms",
+        "Unity.Burst",
+        "Unity.Transforms.Hybrid",
+        "Unity.Entities.Hybrid",
+        "UnityEngine.TestRunner",
+        "PrimeTween.Runtime",
+        "LitMotion",
+        "LitMotion.Extensions",
+        "BreezeBlockGames.HyperTween.UnityShared.Modules.Transforms",
+        "BreezeBlockGames.HyperTween.UnityShared.Modules.InvokeAction"
     ],
-    "includePlatforms": [
-        "Editor"
-    ],
+    "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,
-    "defineConstraints": [],
-    "versionDefines": [],
+    "defineConstraints": [
+        "!HYPER_TWEEN_DISABLE_MODULE_TRANSFORMS",
+        "!HYPER_TWEEN_DISABLE_MODULE_INVOKE_ACTION"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.kyrylokuzyk.primetween",
+            "expression": "0",
+            "define": "PRIME_TWEEN_PERFORMANCE_TESTS"
+        },
+        {
+            "name": "com.annulusgames.lit-motion",
+            "expression": "0",
+            "define": "LIT_MOTION_PERFORMANCE_TESTS"
+        }
+    ],
     "noEngineReferences": false
 }

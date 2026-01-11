@@ -1,0 +1,23 @@
+{
+    "name": "BreezeBlockGames.HyperTween.UnityShared.Modules.Timeline",
+    "rootNamespace": "BreezeBlockGames.HyperTween.UnityShared.Modules.Timeline",
+    "references": [
+        "Unity.Entities",
+        "Unity.Mathematics",
+        "Unity.Collections",
+        "Unity.Burst",
+        "BreezeBlockGames.HyperTween.UnityShared",
+        "BreezeBlockGames.HyperTween.UnityShared.Modules.InvokeAction"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "!HYPER_TWEEN_DISABLE_MODULE_TIMELINE"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -1,0 +1,23 @@
+{
+    "name": "BreezeBlockGames.HyperTween.UnityShared.Modules.Transforms",
+    "rootNamespace": "BreezeBlockGames.HyperTween.UnityShared.Modules.Transforms",
+    "references": [
+        "Unity.Entities",
+        "Unity.Burst",
+        "Unity.Collections",
+        "Unity.Mathematics",
+        "BreezeBlockGames.HyperTween.UnityShared",
+        "Unity.Transforms"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "!HYPER_TWEEN_DISABLE_MODULE_TRANSFORMS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

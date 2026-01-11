@@ -7,7 +7,6 @@ namespace BreezeBlockGames.HyperTween.UnityClient.Installers
     {
         public override void Install(IContainerBuilder builder)
         {
-            // Placeholder
         }
     }
 }
