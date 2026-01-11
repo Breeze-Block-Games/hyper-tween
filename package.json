@@ -8,12 +8,27 @@
   "documentationUrl": "https://github.com/Breeze-Block-Games/hyper-tween/blob/master/README.md",
   "changelogUrl": "https://github.com/Breeze-Block-Games/hyper-tween/blob/master/CHANGELOG.md",
   "licensesUrl": "https://github.com/Breeze-Block-Games/hyper-tween/blob/master/LICENSE.md",
+  "dependencies": {
+    "com.unity.entities": "1.3.14",
+    "com.unity.burst": "1.7.2"
+  },
   "keywords": [],
   "author": {
     "name": "Breeze Block Games",
     "url": "https://github.com/Breeze-Block-Games"
   },
-  "samples": [],
+  "samples": [
+	{
+      "displayName": "Examples.Core",
+      "description": "Examples for use in the documentation",
+      "path": "Samples~/Examples.Core"
+    },
+    {
+      "displayName": "Polyrhythm",
+      "description": "A test bed for using HyperTween with accurate timing",
+      "path": "Samples~/Polyrhythm"
+    }
+  ],
   "devDependencies": {
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/commit-analyzer": "^13.0.1",

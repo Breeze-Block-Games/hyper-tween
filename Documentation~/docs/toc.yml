@@ -1,0 +1,23 @@
+items:
+    - href: getting-started.md
+    - name: Basic Usage
+      items:
+        - href: basic-tween-creation.md
+        - href: basic-tween-easing.md
+        - href: basic-tween-invocation.md
+        - href: basic-tween-easing.md
+        - href: basic-tween-sequencing.md
+    - name: Advanced Usage
+      items:
+        - href: advanced-jobified-tween-creation.md
+        - href: advanced-batch-tween-creation.md
+        - href: advanced-misc.md
+    - href: performance.md
+    - href: modules.md
+    - href: debugging.md
+    - name: Extending HyperTween
+      items:
+        - href: extending-outputs.md
+        - href: extending-invocation.md
+    - name: Changelog
+      href: changelog.md

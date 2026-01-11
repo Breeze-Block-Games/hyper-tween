@@ -3,9 +3,9 @@
     "rootNamespace": "BreezeBlockGames.HyperTween.Editor",
     "references": [
         "BreezeBlockGames.HyperTween.Shared",
-        "BreezeBlockGames.HyperTween.Unity.Shared",
-        "BreezeBlockGames.DependencyInjection.Unity.Shared",
-        "VContainer"
+        "BreezeBlockGames.HyperTween.UnityShared",
+        "Unity.Entities",
+        "Unity.Collections"
     ],
     "includePlatforms": [
         "Editor"

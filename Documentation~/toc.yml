@@ -1,4 +1,3 @@
 ### YamlMime:ManagedReference
 - name: Docs
-  landingPageType: Root
-  href: docs/
+  href: docs/getting-started.md

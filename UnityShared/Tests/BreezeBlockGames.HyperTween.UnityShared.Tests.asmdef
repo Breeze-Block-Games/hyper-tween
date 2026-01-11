@@ -2,17 +2,36 @@
     "name": "BreezeBlockGames.HyperTween.UnityShared.Tests",
     "rootNamespace": "BreezeBlockGames.HyperTween.UnityShared.Tests",
     "references": [
-        "BreezeBlockGames.HyperTween.UnityShared"
+        "BreezeBlockGames.HyperTween.UnityShared",
+        "Unity.Collections",
+        "Unity.Entities",
+        "Unity.Mathematics",
+        "Unity.PerformanceTesting",
+        "Unity.Transforms",
+        "Unity.Burst",
+        "Unity.Transforms.Hybrid",
+        "BreezeBlockGames.HyperTween.UnityShared.Modules.Transforms",
+        "BreezeBlockGames.HyperTween.UnityShared.Modules.InvokeAction",
+        "Unity.Entities.Hybrid",
+        "UnityEngine.TestRunner",
+        "PrimeTween.Runtime"
     ],
-    "includePlatforms": [
-        "Editor"
-    ],
+    "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,
-    "defineConstraints": [],
-    "versionDefines": [],
+    "defineConstraints": [
+        "HYPER_TWEEN_MODULE_INVOKE_ACTION",
+        "HYPER_TWEEN_MODULE_TRANSFORMS"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.kyrylokuzyk.primetween",
+            "expression": "0",
+            "define": "PRIME_TWEEN_PERFORMANCE_TESTS"
+        }
+    ],
     "noEngineReferences": false
 }

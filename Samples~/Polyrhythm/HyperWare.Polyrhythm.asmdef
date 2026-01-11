@@ -1,0 +1,22 @@
+{
+    "name": "HyperWare.HyperTween.Samples",
+    "rootNamespace": "",
+    "references": [
+        "GUID:734d92eba21c94caba915361bd5ac177",
+        "GUID:2665a8d13d1b3f18800f46e256720795",
+        "GUID:e0cd26848372d4e5c891c569017e11f1",
+        "GUID:d8b63aba1907145bea998dd612889d6b",
+        "GUID:804d43111bc54cd4a5a9be763921eb63",
+        "GUID:27e3b70e8846a0b4297b1db4dbe970bd",
+        "GUID:3522c34114fd1ff4e95c3a981bba4246"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

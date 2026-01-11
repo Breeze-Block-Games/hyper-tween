@@ -1,0 +1,29 @@
+{
+    "name": "BreezeBlockGames.HyperTween.UnityShared.Modules.UniTask",
+    "rootNamespace": "BreezeBlockGames.HyperTween.UnityShared.Modules.UniTask",
+    "references": [
+        "UniTask",
+        "Unity.Entities",
+        "Unity.Collections",
+        "Unity.Burst",
+        "BreezeBlockGames.HyperTween.UnityShared"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "!HYPER_TWEEN_DISABLE_MODULE_UNITASK",
+        "HYPER_TWEEN_ENABLE_MODULE_UNITASK"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.cysharp.unitask",
+            "expression": "0",
+            "define": "HYPER_TWEEN_ENABLE_MODULE_UNITASK"
+        }
+    ],
+    "noEngineReferences": false
+}
