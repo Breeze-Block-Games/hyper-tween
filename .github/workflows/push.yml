@@ -16,6 +16,12 @@ jobs:
   semantic-release:
     uses: ./.github/workflows/semantic-release.yml
     secrets: inherit
+
+  service:
+    uses: ./.github/workflows/service.yml
+    with:
+      region: us
+      repository: packages
       
   docs:
     uses: ./.github/workflows/docs.yml

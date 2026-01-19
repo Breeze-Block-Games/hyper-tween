@@ -1,0 +1,53 @@
+name: Service
+on:
+  workflow_call:
+    inputs:
+      region:
+        required: true
+        type: string
+      repository:
+        required: true
+        type: string
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name }}
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Run Tests
+        run: dotnet test Tests~/Tests.csproj --verbosity normal
+
+      - name: Authenticate with Workload Identity Federation
+        uses: google-github-actions/auth@v2
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+          workload_identity_provider: projects/${{ vars.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/github-wif-pool/providers/github-provider
+          service_account: wif-deployer@${{ vars.GCP_PROJECT_ID }}.iam.gserviceaccount.com
+          token_format: access_token
+
+      - name: Google Cloud Setup
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+
+      - name: Configure Docker
+        run: gcloud --quiet auth configure-docker ${{ inputs.region }}-docker.pkg.dev
+
+      - name: Build & Push Docker Image
+        run: |
+          SHORT_SHA=$(echo "${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}" | cut -c1-7)
+          TAG="${{ inputs.region }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ inputs.repository }}/${{ github.event.repository.name }}:${SHORT_SHA}"
+          echo "docker-tag=$TAG" >> $GITHUB_OUTPUT
+          docker build -f Service~/Dockerfile -t "$TAG" .
+          docker push "$TAG"

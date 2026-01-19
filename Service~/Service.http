@@ -1,0 +1,5 @@
+@Service_HostAddress = http://localhost:5046
+
+GET {{Service_HostAddress}}/v1/hello?name=Dave
+
+###

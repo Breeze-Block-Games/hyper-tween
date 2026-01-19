@@ -1,0 +1,14 @@
+{
+  "dependencies": [
+    {
+      "type": "UnityPackageManager",
+      "identifier": "jp.hadashikick.vcontainer",
+      "versionOrPath": "https://github.com/hadashiA/VContainer.git?path=VContainer/Assets/VContainer#1.16.8"
+    },
+    {
+      "type": "GitSubModule",
+      "identifier": "com.breezeblockgames.dependency-injection",
+      "versionOrPath": "https://github.com/Breeze-Block-Games/dependency-injection.git"
+    }
+  ]
+}

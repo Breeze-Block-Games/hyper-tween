@@ -1,0 +1,15 @@
+name: Documentation
+landingPageType: Root
+items:
+    - href: getting-started.md
+    - href: directory-structure.md
+      items: 
+        - href: documentation.md
+        - href: github.md
+        - href: service.md
+        - href: shared.md
+        - href: tests.md
+        - href: tools.md
+        - href: unity.md
+    - name: Changelog
+      href: changelog.md
