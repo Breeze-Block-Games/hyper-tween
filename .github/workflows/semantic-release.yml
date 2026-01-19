@@ -1,0 +1,53 @@
+name: Semantic Release
+on:
+  workflow_call:
+    outputs:
+      version:
+        description: "Computed version string."
+        value: ${{ jobs.semantic-release.outputs.version }}
+
+jobs:
+  semantic-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      version: ${{ steps.export-version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install semantic-release + plugins + run
+        id: semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npx \
+            -p semantic-release \
+            -p @semantic-release/commit-analyzer \
+            -p @semantic-release/release-notes-generator \
+            -p @semantic-release/changelog \
+            -p @semantic-release/github \
+            -p @semantic-release/git \
+            -p semantic-release-export-data \
+            semantic-release
+
+      - id: export-version
+        run: |
+          set -euo pipefail
+          VERSION=$(node -pe "require('./package.json').version || '0.0.0'")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          
+      - uses: actions/upload-artifact@v4
+        with:
+          name: changelog
+          path: |
+            CHANGELOG.md
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 4

@@ -1,0 +1,19 @@
+{
+    "name": "BreezeBlockGames.PackageBase.UnityClient",
+    "rootNamespace": "BreezeBlockGames.PackageBase.UnityClient",
+    "references": [
+        "BreezeBlockGames.PackageBase.Shared",
+        "BreezeBlockGames.PackageBase.UnityShared"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "!UNITY_SERVER"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

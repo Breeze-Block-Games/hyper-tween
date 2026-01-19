@@ -1,2 +1,6 @@
 # package-base
-Base repository to be forked for each package
+
+Package Base is a repository to act as the 'base' for all Breeze Block Games packages such that they all have a
+consistent directory structure and certain functionalities by default.
+
+Please see the [documentation](https://docs.breezeblock.games/package-base/latest) for more info.
