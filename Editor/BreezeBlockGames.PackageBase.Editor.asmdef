@@ -1,0 +1,20 @@
+{
+    "name": "BreezeBlockGames.PackageBase.Editor",
+    "rootNamespace": "BreezeBlockGames.PackageBase.Editor",
+    "references": [
+        "BreezeBlockGames.PackageBase.Shared",
+        "BreezeBlockGames.PackageBase.UnityShared",
+        "VContainer"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

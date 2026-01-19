@@ -1,0 +1,25 @@
+name: On Push & Pull Request
+on:
+  push:
+    branches:
+      - main
+      - next
+      - dev
+  pull_request:
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  id-token: write
+jobs:
+  semantic-release:
+    uses: ./.github/workflows/semantic-release.yml
+    secrets: inherit
+      
+  docs:
+    uses: ./.github/workflows/docs.yml
+    with: 
+      semver: ${{ needs.semantic-release.outputs.version }}
+    needs:
+      semantic-release
