@@ -18,7 +18,7 @@
     "url": "https://github.com/Breeze-Block-Games"
   },
   "samples": [
-	{
+    {
       "displayName": "Examples",
       "description": "Examples for use in the documentation",
       "path": "Samples~/Examples"
