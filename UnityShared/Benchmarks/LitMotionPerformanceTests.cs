@@ -8,7 +8,7 @@ using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace BreezeBlockGames.HyperTween.UnityShared.Tests
+namespace BreezeBlockGames.HyperTween.UnityShared..Benchmarks
 {
     public class LitMotionPerformanceTests : BasePerformanceTests
     {

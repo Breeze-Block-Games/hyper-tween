@@ -1,6 +1,6 @@
 {
-    "name": "BreezeBlockGames.HyperTween.UnityShared.Benchmarks",
-    "rootNamespace": "BreezeBlockGames.HyperTween.UnityShared.Benchmarks",
+    "name": "BreezeBlockGames.HyperTween.UnityShared..Benchmarks",
+    "rootNamespace": "BreezeBlockGames.HyperTween.UnityShared..Benchmarks",
     "references": [
         "BreezeBlockGames.HyperTween.UnityShared",
         "Unity.Collections",

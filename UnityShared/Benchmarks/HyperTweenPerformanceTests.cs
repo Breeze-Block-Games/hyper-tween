@@ -12,7 +12,7 @@ using Unity.Mathematics;
 using Unity.Profiling;
 using UnityEngine;
 
-namespace BreezeBlockGames.HyperTween.UnityShared.Tests
+namespace BreezeBlockGames.HyperTween.UnityShared..Benchmarks
 {
     [BurstCompile]
     public class HyperTweenPerformanceTests : BasePerformanceTests

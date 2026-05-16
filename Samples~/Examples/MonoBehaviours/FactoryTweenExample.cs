@@ -2,7 +2,7 @@ using BreezeBlockGames.HyperTween.UnityShared.API;
 using BreezeBlockGames.HyperTween.UnityShared.TweenBuilders;
 using UnityEngine;
 
-namespace HyperTween.Examples
+namespace BreezeBlockGames.HyperTween.Examples.MonoBehaviours
 {
     public class FactoryTweenExample : MonoBehaviour
     {

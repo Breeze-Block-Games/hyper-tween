@@ -3,7 +3,7 @@ using System;
 using Unity.PerformanceTesting;
 using UnityEngine.Scripting;
 
-namespace BreezeBlockGames.HyperTween.UnityShared.Tests
+namespace BreezeBlockGames.HyperTween.UnityShared..Benchmarks
 {
     public class GCAllocSampler : IDisposable
     {

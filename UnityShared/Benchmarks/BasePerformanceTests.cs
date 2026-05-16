@@ -13,7 +13,7 @@ using UnityEngine;
 using UnityEngine.TestTools;
 using Object = UnityEngine.Object;
 
-namespace BreezeBlockGames.HyperTween.UnityShared.Tests
+namespace BreezeBlockGames.HyperTween.UnityShared..Benchmarks
 {
     [TestFixture]
     public abstract class BasePerformanceTests
