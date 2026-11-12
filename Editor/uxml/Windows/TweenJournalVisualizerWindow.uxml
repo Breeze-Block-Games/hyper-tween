@@ -1,0 +1,6 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
+    <ui:Template name="WorldInspectorToolbar" src="project://database/Packages/com.breezeblockgames.hyper-tween/Editor/uxml/WorldInspector/Toolbar.uxml?fileID=9197481963319205126&amp;guid=20f0db78c09d39745a2b06834dd296ab&amp;type=3#Toolbar"/>
+    <ui:Instance template="WorldInspectorToolbar"/>
+    <ui:HelpBox text="Placeholder Error Text" message-type="Error"/>
+    <ui:VisualElement name="Content" style="flex-grow: 1; background-color: rgb(32, 32, 32);"/>
+</ui:UXML>

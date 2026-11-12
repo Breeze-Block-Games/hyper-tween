@@ -1,13 +1,14 @@
 using BreezeBlockGames.DependencyInjection.UnityShared;
+using BreezeBlockGames.HyperTween.UnityShared.API;
 using VContainer;
 
-namespace BreezeBlockGames.PackageBase.UnityShared.Installers
+namespace BreezeBlockGames.HyperTween.UnityShared.Installers
 {
     public class BootstrapInstaller : PackageInstaller
     {
         public override void Install(IContainerBuilder builder)
         {
-            // Placeholder
+            builder.RegisterInstance(TweenCollection.Create());
         }
     }
 }

@@ -1,0 +1,7 @@
+<engine:UXML xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" editor-extension-mode="False">
+    <engine:VisualElement>
+        <BreezeBlockGames.HyperTween.Editor.VisualElements.WorldSelector pref-key="TweenJournal">
+            <editor:ToolbarMenu name="ToolbarMenu" text="World" />
+        </BreezeBlockGames.HyperTween.Editor.VisualElements.WorldSelector>
+    </engine:VisualElement>
+</engine:UXML>

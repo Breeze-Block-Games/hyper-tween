@@ -1,0 +1,22 @@
+{
+    "name": "BreezeBlockGames.HyperTween.UnityShared.Modules.UI",
+    "rootNamespace": "BreezeBlockGames.HyperTween.UnityShared.Modules.UI",
+    "references": [
+        "Unity.Entities",
+        "Unity.Burst",
+        "Unity.Collections",
+        "Unity.Mathematics",
+        "BreezeBlockGames.HyperTween.UnityShared"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "!HYPER_TWEEN_DISABLE_MODULE_UI"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

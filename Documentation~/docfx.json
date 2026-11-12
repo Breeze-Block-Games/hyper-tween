@@ -4,7 +4,7 @@
             {
                 "files": [
                     "*.{md,yml}",
-                    "docs/**/*.{md,yml}",
+                    "docs/*.{md,yml}",
                     "api/*.yml"
                 ]
             }
@@ -27,14 +27,14 @@
             "logo-template"
         ],
         "globalMetadata": {
-            "_appName": "PackageBase",
-            "_appTitle": "Package Base",
+            "_appName": "HyperTween",
+            "_appTitle": "HyperTween",
             "_enableSearch": true,
             "pdf": false,
             "_appFaviconPath": "images/dark-logo.png"
         },
         "sitemap": {
-            "baseUrl": "https://docs.breezeblock.games/package-base",
+            "baseUrl": "https://github.com/david-rzepa/HyperTween",
             "changefreq": "weekly",
             "fileOptions": {
                 "api/*": {

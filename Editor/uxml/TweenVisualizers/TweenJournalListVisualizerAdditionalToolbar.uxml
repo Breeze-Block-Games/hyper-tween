@@ -1,0 +1,3 @@
+<engine:UXML xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" editor-extension-mode="True">
+    <editor:EnumFlagsField label="Event Type Filter" value="Create, OnPlay, OnStop, Conflict, Output, CreateDuration, CompleteDuration, CreateForkOnPlay, CompleteForkOnPlay, CreateSignalJoinOnStop, CompleteSignalJoinOnStop, CreatePlayOnPlay, CompletePlayOnPlay, CreatePlayOnStop, CompletePlayOnStop, Destroy" type="BreezeBlockGames.HyperTween.UnityShared.Journal.Components.TweenJournal+Event, BreezeBlockGames.HyperTween.UnityShared" name="EventTypeFilter"/>
+</engine:UXML>

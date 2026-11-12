@@ -1,0 +1,5 @@
+# CODEOWNERS
+# This file specifies who owns which parts of the codebase.
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+* @david-rzepa
