@@ -1,0 +1,20 @@
+{
+    "name": "BreezeBlockGames.PackageBase.UnityClient.Installers",
+    "rootNamespace": "BreezeBlockGames.PackageBase.UnityClient.Installers",
+    "references": [
+        "BreezeBlockGames.PackageBase.UnityClient",
+        "BreezeBlockGames.DependencyInjection.UnityShared",
+        "VContainer"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "!UNITY_SERVER"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -1,0 +1,74 @@
+name: Documentation
+on:
+  workflow_call:
+    inputs:
+      semver:
+        description: 'Semantic version to use as GCS upload directory'
+        required: true
+        type: string
+        
+jobs:
+  build-and-publish-docs:
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name }}
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      id-token: write
+    env:
+      DOCS_SUBDOMAIN: ${{ github.ref_name == 'main' && 'docs' || format('{0}.docs', github.ref_name) }}
+    steps:
+
+      - name: Validate semver
+        run: |
+          SEMVER="${{ inputs.semver }}"
+
+          # Regex for semver: MAJOR.MINOR.PATCH with optional pre-release and build
+          if ! [[ "$SEMVER" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]]; then
+            echo "Invalid semver: '$SEMVER'"
+            exit 1
+          fi
+
+          echo "Valid semver: $SEMVER"
+          
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+          
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: changelog
+          path: .
+          merge-multiple: false
+
+      - name: Dotnet Setup
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 8.x
+
+      - name: Install docfx
+        run: dotnet tool update -g docfx
+
+      - name: Build docfx documentation
+        run: docfx 'Documentation~/docfx.json'
+
+      - name: Authenticate with Workload Identity Federation
+        uses: google-github-actions/auth@v2
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+          workload_identity_provider: projects/${{ vars.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/github-wif-pool/providers/github-provider
+          service_account: wif-deployer@${{ vars.GCP_PROJECT_ID }}.iam.gserviceaccount.com
+          token_format: access_token
+
+      - name: Sync to GCS
+        run: |
+          gcloud storage rsync -r --delete-unmatched-destination-objects Documentation~/_site gs://${{ env.DOCS_SUBDOMAIN }}.breezeblock.games/${{ github.event.repository.name }}/${{ inputs.semver }}
+
+      - name: Sync to GCS latest
+        if: github.ref == 'refs/heads/main'
+        run: |
+          gcloud storage rsync -r --delete-unmatched-destination-objects Documentation~/_site gs://${{ env.DOCS_SUBDOMAIN }}.breezeblock.games/${{ github.event.repository.name }}/latest
+
