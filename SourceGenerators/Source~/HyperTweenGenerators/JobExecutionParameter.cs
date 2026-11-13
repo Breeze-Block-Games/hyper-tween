@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using Microsoft.CodeAnalysis;
-using Unity.Entities.SourceGen.Common;
 
 namespace HyperTweenGenerators;
 

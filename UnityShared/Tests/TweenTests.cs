@@ -2,6 +2,8 @@
 using System.Collections;
 using System.Linq;
 using BreezeBlockGames.HyperTween.UnityShared.API;
+using BreezeBlockGames.HyperTween.UnityShared.ECS.ConflictDetection.Systems;
+using BreezeBlockGames.HyperTween.UnityShared.ECS.ConflictDetection.Components;
 using BreezeBlockGames.HyperTween.UnityShared.ECS.Structural.Components;
 using BreezeBlockGames.HyperTween.UnityShared.Modules.InvokeAction.API;
 using BreezeBlockGames.HyperTween.UnityShared.Modules.LocalTransforms.API;
@@ -10,6 +12,7 @@ using BreezeBlockGames.HyperTween.UnityShared.TweenBuilders;
 using BreezeBlockGames.HyperTween.UnityShared.Util;
 using NUnit.Framework;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Core;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -19,10 +22,53 @@ using UnityEngine.TestTools;
 
 namespace BreezeBlockGames.HyperTween.UnityShared.Tests
 {
+    public class ConflictIdentityTests
+    {
+        [Test]
+        public void InstanceIdKey_DistinguishesIdsWithEqualLowBits()
+        {
+            var first = new InstanceIdKey(0x0000000100000001UL, default);
+            var second = new InstanceIdKey(0x0000000200000001UL, default);
+
+            Assert.IsFalse(first.Equals(second));
+            Assert.IsTrue(first.Equals(new InstanceIdKey(0x0000000100000001UL, default)));
+        }
+
+        [Test]
+        public void UnityObjectInstanceId_PreservesObjectIdentity()
+        {
+            var gameObject = new GameObject();
+            try
+            {
+                var id = UnityObjectInstanceId.Create(gameObject);
+#if UNITY_6000_4_OR_NEWER
+                Assert.AreEqual(gameObject.GetEntityId(), UnsafeUtility.As<UnityObjectInstanceId, EntityId>(ref id));
+#else
+                Assert.AreEqual(gameObject.GetInstanceID(), UnsafeUtility.As<UnityObjectInstanceId, int>(ref id));
+#endif
+            }
+            finally
+            {
+                Object.DestroyImmediate(gameObject);
+            }
+        }
+
+        [Test]
+        public void InstanceIdKey_PreservesSigned32BitIds()
+        {
+            Assert.IsFalse(new InstanceIdKey(-1, default).Equals(new InstanceIdKey(1, default)));
+            Assert.IsTrue(new InstanceIdKey(-1, default).Equals(new InstanceIdKey(-1, default)));
+        }
+    }
+
     public class TweenTests
     {
         private World? _world;
         private TweenFactory<EntityManagerTweenBuilder> _tweenFactory;
+
+        // Batch mode has no end-of-frame coroutine callback, so resume on the next frame instead.
+        // Interactive runs retain their original end-of-frame timing.
+        private static object? WaitForFrame() => Application.isBatchMode ? null : new WaitForEndOfFrame();
     
         [SetUp]
         public void SetUp()
@@ -72,19 +118,19 @@ namespace BreezeBlockGames.HyperTween.UnityShared.Tests
             // to UpdateWorldTimeSystem. For the purposes of these tests, it's defined that timing is measured from the
             // perspective of the OnTween[Stop/Play]Systems
 
-            // Due to limitations of coroutines, the only good context we can get into to measure the start time is at
-            // the end of the frame after all systems have run
-            yield return new WaitForEndOfFrame();
+            // Cross a frame boundary before measuring the start time so the world has completed an update.
+            yield return WaitForFrame();
 
-            // Record the start time as a reference to measure other times against
-            var worldStartTime = _world.Time.ElapsedTime;
+            // A null yield resumes after Initialization has advanced world time but before Simulation runs.
+            // Its pending simulation interval begins at ElapsedTime - DeltaTime. An interactive end-of-frame
+            // yield resumes after Simulation, so the next interval begins at the current ElapsedTime.
+            var worldStartTime = _world.Time.ElapsedTime - (Application.isBatchMode ? _world.Time.DeltaTime : 0);
 
             double? startTime = null, endTime = null;
 
             tweenHandle.InvokeActionOnPlay(_ =>
                 {
-                    // We actually have a frame of latency between calling Play() and the tween starting here, due to
-                    // execution order so we need to subtract deltaTime. See the giant comment below...
+                    // Measure from the beginning of the simulation interval, matching the reference above.
                     startTime = _world.Time.ElapsedTime - _world.Time.DeltaTime - worldStartTime;
                     Debug.Log($"startTime: {startTime}");
                 })
@@ -104,13 +150,13 @@ namespace BreezeBlockGames.HyperTween.UnityShared.Tests
             do
             {
                 Debug.Log("---- tick");
-                yield return new WaitForEndOfFrame();
+                yield return WaitForFrame();
                 Debug.Log($"Elapsed: {_world.Time.ElapsedTime - worldStartTime}, dt: {_world.Time.DeltaTime}");
                 //Debug.Log($"Timer: {_world.EntityManager.GetComponentData<TweenTimer>(tweenHandle.Entity).Value}");
             } while (_world.Time.ElapsedTime - worldStartTime < duration + 1f);
             
             // Because of the extra frame of latency in processing tweens with duration, we wait an extra frame here
-            yield return new WaitForEndOfFrame();
+            yield return WaitForFrame();
 
             Assert.IsTrue(startTime.HasValue);
             Assert.IsTrue(endTime.HasValue);
@@ -209,7 +255,7 @@ namespace BreezeBlockGames.HyperTween.UnityShared.Tests
             
             do
             {
-                yield return new WaitForEndOfFrame();
+                yield return WaitForFrame();
             } while (_world.EntityManager.HasComponent<TweenPlaying>(tweenHandle.Entity));
         
             Assert.AreEqual(expectedPosition, gameObject.transform.position);
@@ -228,7 +274,7 @@ namespace BreezeBlockGames.HyperTween.UnityShared.Tests
                 .WithLocalPositionOutput(expectedPosition)
                 .Play();
             
-            yield return new WaitForEndOfFrame();
+            yield return WaitForFrame();
 
             Assert.AreEqual(expectedPosition, _world.EntityManager.GetComponentData<LocalTransform>(otherEntity).Position);
         }

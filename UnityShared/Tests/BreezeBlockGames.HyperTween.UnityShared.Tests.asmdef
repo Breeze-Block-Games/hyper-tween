@@ -6,15 +6,10 @@
         "Unity.Collections",
         "Unity.Entities",
         "Unity.Mathematics",
-        "Unity.PerformanceTesting",
         "Unity.Transforms",
         "Unity.Burst",
         "Unity.Transforms.Hybrid",
         "Unity.Entities.Hybrid",
-        "UnityEngine.TestRunner",
-        "PrimeTween.Runtime",
-        "LitMotion",
-        "LitMotion.Extensions",
         "BreezeBlockGames.HyperTween.UnityShared.Modules.Transforms",
         "BreezeBlockGames.HyperTween.UnityShared.Modules.InvokeAction"
     ],
@@ -23,22 +18,15 @@
     "allowUnsafeCode": false,
     "overrideReferences": false,
     "precompiledReferences": [],
-    "autoReferenced": true,
+    "autoReferenced": false,
     "defineConstraints": [
+        "UNITY_INCLUDE_TESTS",
         "!HYPER_TWEEN_DISABLE_MODULE_TRANSFORMS",
         "!HYPER_TWEEN_DISABLE_MODULE_INVOKE_ACTION"
     ],
-    "versionDefines": [
-        {
-            "name": "com.kyrylokuzyk.primetween",
-            "expression": "0",
-            "define": "PRIME_TWEEN_PERFORMANCE_TESTS"
-        },
-        {
-            "name": "com.annulusgames.lit-motion",
-            "expression": "0",
-            "define": "LIT_MOTION_PERFORMANCE_TESTS"
-        }
+    "versionDefines": [],
+    "optionalUnityReferences": [
+        "TestAssemblies"
     ],
     "noEngineReferences": false
 }

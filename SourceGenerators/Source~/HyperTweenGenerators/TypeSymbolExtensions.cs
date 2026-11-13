@@ -4,7 +4,6 @@ using System.Collections.Immutable;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Unity.Entities.SourceGen.Common;
 
 namespace HyperTweenGenerators;
 
@@ -81,7 +80,7 @@ public static class TypeSymbolExtensions
         {
             fullyQualifiedAttributeName = PrependGlobalIfMissing(fullyQualifiedAttributeName);
             return typeSymbol.GetAttributes()
-                .First(attribute => attribute.AttributeClass.ToFullName() == fullyQualifiedAttributeName);
+                .First(attribute => attribute.AttributeClass?.ToFullName() == fullyQualifiedAttributeName);
         }
     }
     

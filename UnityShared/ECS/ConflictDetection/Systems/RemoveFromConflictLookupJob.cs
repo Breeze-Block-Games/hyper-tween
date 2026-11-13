@@ -50,12 +50,18 @@ namespace BreezeBlockGames.HyperTween.UnityShared.ECS.ConflictDetection.Systems
                 {
                     hasTarget = true;
                     
-                    var instanceIds = chunk.GetDynamicComponentDataArrayReinterpret<int>(ref instanceIdComponentTypeHandle, IntSize);
+                    // Unity object IDs are 64-bit on newer editors; custom IDs may still be 32-bit.
+                    var instanceIdSize = TypeManager.GetTypeInfo(conflictTypeTuple.InstanceIdComponentTypeInfo.ComponentType.TypeIndex).SizeInChunk;
+                    var instanceIds = chunk.GetDynamicComponentDataArrayReinterpret<byte>(ref instanceIdComponentTypeHandle, instanceIdSize);
+                    var instanceIds32 = instanceIdSize == sizeof(int) ? instanceIds.Reinterpret<int>(1) : default;
+                    var instanceIds64 = instanceIdSize == sizeof(ulong) ? instanceIds.Reinterpret<ulong>(1) : default;
+                    if (!instanceIds32.IsCreated && !instanceIds64.IsCreated)
+                        throw new System.InvalidOperationException("Conflict identity components must contain a 32-bit or 64-bit ID.");
 
                     var enumerator = new ChunkEntityEnumerator(useEnabledMask, chunkEnabledMask, chunk.Count);
                     while (enumerator.NextEntityIndex(out var i))
                     {
-                        var transformInstanceId = instanceIds[i];
+                        var transformInstanceId = instanceIds32.IsCreated ? unchecked((ulong)(uint)instanceIds32[i]) : instanceIds64[i];
 
                         if (!GameObjectTypeKeyToTweenMap.Remove(new InstanceIdKey(transformInstanceId, targetComponentType)))
                         {

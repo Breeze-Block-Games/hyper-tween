@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Unity.Entities.SourceGen.Common;
 
 namespace HyperTweenGenerators;
 
@@ -22,10 +21,10 @@ public class TweenOutputSystemGenerator : ISourceGenerator
         if (!SourceGenHelpers.IsBuildTime || !SourceGenHelpers.ShouldRun(context.Compilation, context.CancellationToken))
             return;
 
-        SourceOutputHelpers.Setup(context.ParseOptions, context.AdditionalFiles);
+        var sourceOutput = new SourceOutputHelpers(context);
 
         Location? lastLocation = null;
-        SourceOutputHelpers.LogInfoToSourceGenLog($"Source generating assembly {context.Compilation.Assembly.Name}...");
+        sourceOutput.LogInfoToSourceGenLog($"Source generating assembly {context.Compilation.Assembly.Name}...");
 
         var stopwatch = Stopwatch.StartNew();
 
@@ -75,12 +74,12 @@ public class TweenOutputSystemGenerator : ISourceGenerator
                 for (int i = 0; i < generatedPartialSystems.Count; i++)
                 {
                     var generatedPartial = generatedPartialSystems[i];
-                    var generatedFile = syntaxTree.GetGeneratedSourceFilePath(context.Compilation.Assembly.Name, nameof(TweenOutputSystemGenerator), salting: i);
+                    var generatedFile = sourceOutput.GetGeneratedSourceFilePath(syntaxTree, context.Compilation.Assembly.Name, nameof(TweenOutputSystemGenerator), salting: i);
                     var outputSource = TypeCreationHelpers.FixUpLineDirectivesAndOutputSource(generatedFile.FullFilePath, generatedPartial);
                     
                     context.AddSource(generatedFile.FileNameOnly, outputSource);
                     
-                    SourceOutputHelpers.OutputSourceToFile(
+                    sourceOutput.OutputSourceToFile(
                         generatedFile.FullFilePath,
                         () => outputSource.ToString());
                 }
@@ -88,7 +87,7 @@ public class TweenOutputSystemGenerator : ISourceGenerator
 
             stopwatch.Stop();
 
-            SourceOutputHelpers.LogInfoToSourceGenLog($"TIME : {nameof(TweenOutputSystemGenerator)} : {context.Compilation.Assembly.Name} : {stopwatch.ElapsedMilliseconds}ms");
+            sourceOutput.LogInfoToSourceGenLog($"TIME : {nameof(TweenOutputSystemGenerator)} : {context.Compilation.Assembly.Name} : {stopwatch.ElapsedMilliseconds}ms");
         }
         catch (Exception exception)
         {

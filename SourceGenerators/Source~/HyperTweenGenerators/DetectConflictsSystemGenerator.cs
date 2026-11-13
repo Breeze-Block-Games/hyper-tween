@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Unity.Entities.SourceGen.Common;
 
 namespace HyperTweenGenerators;
 
@@ -23,10 +22,10 @@ public class DetectConflictsSystemGenerator : ISourceGenerator
         if (!SourceGenHelpers.IsBuildTime || !SourceGenHelpers.ShouldRun(context.Compilation, context.CancellationToken))
             return;
 
-        SourceOutputHelpers.Setup(context.ParseOptions, context.AdditionalFiles);
+        var sourceOutput = new SourceOutputHelpers(context);
 
         Location? lastLocation = null;
-        SourceOutputHelpers.LogInfoToSourceGenLog($"Source generating assembly {context.Compilation.Assembly.Name}...");
+        sourceOutput.LogInfoToSourceGenLog($"Source generating assembly {context.Compilation.Assembly.Name}...");
 
         var stopwatch = Stopwatch.StartNew();
 
@@ -81,14 +80,14 @@ public class DetectConflictsSystemGenerator : ISourceGenerator
                 var (hint, source) = tuple;
                 context.AddSource($"{hint}.g.cs", source);
                 
-                SourceOutputHelpers.OutputSourceToFile(
+                sourceOutput.OutputSourceToFile(
                     $"Temp/GeneratedCode/{context.Compilation.Assembly.Name}/{hint}.g.cs",
                     () => source);
             }
 
             stopwatch.Stop();
 
-            SourceOutputHelpers.LogInfoToSourceGenLog($"TIME : {nameof(DetectConflictsSystemGenerator)} : {context.Compilation.Assembly.Name} : {stopwatch.ElapsedMilliseconds}ms");
+            sourceOutput.LogInfoToSourceGenLog($"TIME : {nameof(DetectConflictsSystemGenerator)} : {context.Compilation.Assembly.Name} : {stopwatch.ElapsedMilliseconds}ms");
         }
         catch (Exception exception)
         {

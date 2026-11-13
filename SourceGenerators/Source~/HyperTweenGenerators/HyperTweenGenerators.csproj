@@ -17,15 +17,11 @@
       <ItemGroup>
         <_FilesToCopy Include="$(OutputPath)**\$(AssemblyName).dll" /><_FilesToCopy Include="$(OutputPath)**\$(AssemblyName).pdb" />
       </ItemGroup>
-      <Copy SourceFiles="@(_FilesToCopy)" DestinationFolder="$(OutputPath)..\..\..\..\.." />
+      <Copy SourceFiles="@(_FilesToCopy)" DestinationFolder="$(MSBuildProjectDirectory)/../.." />
     </Target>
 
     <ItemGroup>
         <AdditionalFiles Include="AnalyzerReleases.Shipped.md" />
         <AdditionalFiles Include="AnalyzerReleases.Unshipped.md" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\..\..\..\..\Library\PackageCache\com.unity.entities@42c4e852ffb4\Unity.Entities\SourceGenerators\Source~\Common\Common.csproj" />
     </ItemGroup>
 </Project>

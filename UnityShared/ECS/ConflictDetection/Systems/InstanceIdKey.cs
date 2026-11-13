@@ -5,10 +5,15 @@ namespace BreezeBlockGames.HyperTween.UnityShared.ECS.ConflictDetection.Systems
 {
     public readonly struct InstanceIdKey : IEquatable<InstanceIdKey>
     {
-        private readonly int _instanceId;
+        private readonly ulong _instanceId;
         private readonly ComponentType _componentType;
 
         public InstanceIdKey(int instanceId, ComponentType componentType)
+            : this(unchecked((ulong)(uint)instanceId), componentType)
+        {
+        }
+
+        public InstanceIdKey(ulong instanceId, ComponentType componentType)
         {
             _instanceId = instanceId;
             _componentType = componentType;
@@ -25,7 +30,7 @@ namespace BreezeBlockGames.HyperTween.UnityShared.ECS.ConflictDetection.Systems
             unchecked
             {
                 int hash = 17;
-                hash = hash * 31 + _instanceId;
+                hash = hash * 31 + _instanceId.GetHashCode();
                 hash = hash * 31 + _componentType.GetHashCode();
                 return hash;
             }            
