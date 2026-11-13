@@ -2,7 +2,6 @@
     "name": "BreezeBlockGames.PackageBase.UnityServer.Installers",
     "rootNamespace": "BreezeBlockGames.PackageBase.UnityServer.Installers",
     "references": [
-        "BreezeBlockGames.PackageBase.UnityServer",
         "BreezeBlockGames.DependencyInjection.UnityShared",
         "VContainer"
     ],
