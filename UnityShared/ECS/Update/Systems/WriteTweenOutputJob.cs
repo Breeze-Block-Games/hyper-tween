@@ -9,8 +9,8 @@ namespace BreezeBlockGames.HyperTween.UnityShared.ECS.Update.Systems
 {
     [BurstCompile]
     public struct WriteTweenOutputJob<TTweenFrom, TTweenTo, TTargetComponent, TValue> : IJobChunk
-        where TTweenFrom : unmanaged, ITweenFrom<TValue> 
-        where TTweenTo : unmanaged, ITweenTo<TTargetComponent, TValue> 
+        where TTweenFrom : unmanaged, ITweenFrom<TValue>
+        where TTweenTo : unmanaged, ITweenTo<TTargetComponent, TValue>
         where TTargetComponent : unmanaged, IComponentData
     {
         [ReadOnly]
@@ -21,13 +21,13 @@ namespace BreezeBlockGames.HyperTween.UnityShared.ECS.Update.Systems
         public ComponentTypeHandle<TweenParameter> TweenParameterHandle;
         [ReadOnly]
         public ComponentTypeHandle<TweenTarget> TweenTargetHandle;
-        
+
         public ComponentTypeHandle<TTargetComponent> TargetComponentHandle;
-             
+
         // Conflict detection ensures that each Entity is only pointed to by a single TweenTarget for a given component
         [NativeDisableParallelForRestriction, NativeDisableContainerSafetyRestriction]
         public ComponentLookup<TTargetComponent> TargetComponents;
-        
+
         [BurstCompile]
         public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
         {
@@ -46,18 +46,20 @@ namespace BreezeBlockGames.HyperTween.UnityShared.ECS.Update.Systems
                     var toComponent = tweenTos[i];
                     var to = toComponent.GetValue();
                     var interpolated = toComponent.Lerp(from, to, tweenParameters[i].Value);
-                    
+
                     var tweenTarget = tweenTargets[i];
-                     
+                    if (!TargetComponents.HasComponent(tweenTarget.Target))
+                        continue;
+
                     var targetComponent = TargetComponents[tweenTarget.Target];
                     toComponent.Write(ref targetComponent, interpolated);
                     TargetComponents[tweenTarget.Target] = targetComponent;
                 }
             }
             else
-            {            
+            {
                 var targetComponents = chunk.GetNativeArray(ref TargetComponentHandle);
-                
+
                 while (enumerator.NextEntityIndex(out var i))
                 {
                     var from = tweenFroms[i].GetValue();

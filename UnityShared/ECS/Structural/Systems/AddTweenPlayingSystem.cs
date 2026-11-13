@@ -15,7 +15,7 @@ namespace BreezeBlockGames.HyperTween.UnityShared.ECS.Structural.Systems
     {
         private EntityQuery _zeroDurationTweensQuery;
         private TweenJournalAccess _tweenJournalAccess;
-        
+
         public void OnCreate(ref SystemState state)
         {
             state.RequireForUpdate<CleanTweenStructuralChangeECBSystem.Singleton>();
@@ -26,9 +26,9 @@ namespace BreezeBlockGames.HyperTween.UnityShared.ECS.Structural.Systems
                 // Tweens with TweenStopOnJoin won't have a duration but shouldn't be stopped
                 .WithNone<TweenDuration, TweenStopOnJoin>()
             );
-            
+
             state.RequireForUpdate(_zeroDurationTweensQuery);
-            
+
             TweenJournalAccess.TryCreate(ref state, out _tweenJournalAccess);
         }
 
@@ -43,12 +43,16 @@ namespace BreezeBlockGames.HyperTween.UnityShared.ECS.Structural.Systems
 
             cleanEcb.AddComponent<TweenForceOutput>(_zeroDurationTweensQuery, EntityQueryCaptureMode.AtPlayback);
             ecb.RemoveComponent<TweenRequestPlaying>(_zeroDurationTweensQuery, EntityQueryCaptureMode.AtPlayback);
-            
+
+            foreach (var (request, overflow) in SystemAPI.Query<RefRO<TweenRequestPlaying>, RefRW<TweenDurationOverflow>>()
+                         .WithAll<TweenOnPlay>().WithNone<TweenDuration, TweenStopOnJoin>())
+                overflow.ValueRW.Value = request.ValueRO.DurationOverflow;
+
             if (!_tweenJournalAccess.TryGet(ref state, out var tweenJournalSingleton))
             {
                 return;
             }
-            
+
             foreach (var (_, entity) in SystemAPI.Query<RefRO<TweenOnPlay>>()
                          .WithAll<TweenJournal>()
                          .WithNone<TweenDuration, TweenStopOnJoin>().WithEntityAccess())
@@ -59,11 +63,11 @@ namespace BreezeBlockGames.HyperTween.UnityShared.ECS.Structural.Systems
                     Event = TweenJournal.Event.CompleteDuration
                 });
             }
-            
+
             _tweenJournalAccess.AddDependency(ref state);
         }
     }
-    
+
     [UpdateInGroup(typeof(OnTweenPlaySystemGroup))]
     [BurstCompile]
     partial struct AddTweenPlayingSystem : ISystem
@@ -75,12 +79,12 @@ namespace BreezeBlockGames.HyperTween.UnityShared.ECS.Structural.Systems
         {
             state.RequireForUpdate<CleanTweenStructuralChangeECBSystem.Singleton>();
             state.RequireForUpdate<TweenStructuralChangeECBSystem.Singleton>();
-            
+
             _playTweensQuery = state.GetEntityQuery(new EntityQueryBuilder(Allocator.Temp)
                 .WithAll<TweenOnPlay>());
 
             state.RequireForUpdate(_playTweensQuery);
-            
+
             TweenJournalAccess.TryCreate(ref state, out _tweenJournalAccess);
         }
 
@@ -93,7 +97,7 @@ namespace BreezeBlockGames.HyperTween.UnityShared.ECS.Structural.Systems
             ecb.AddComponent<TweenPlaying>(_playTweensQuery, EntityQueryCaptureMode.AtPlayback);
 
             var hasJournalAccess = _tweenJournalAccess.TryGet(ref state, out var tweenJournalSingleton);
-            
+
             foreach (var (tweenRequestPlaying, tweenDuration, tweenTimer, tweenDurationOverflow, entity) in SystemAPI
                          .Query<RefRO<TweenRequestPlaying>, RefRO<TweenDuration>, RefRW<TweenTimer>, RefRW<TweenDurationOverflow>>()
                          .WithNone<TweenPlaying>()
@@ -106,11 +110,11 @@ namespace BreezeBlockGames.HyperTween.UnityShared.ECS.Structural.Systems
                 {
                     continue;
                 }
-                
+
                 // If we already reached the duration, remove RequestTweenPlaying to stop the tween immediately
-                tweenTimer.ValueRW.Value = tweenDuration.ValueRO.Value;
                 tweenDurationOverflow.ValueRW.Value = tweenTimer.ValueRW.Value - tweenDuration.ValueRO.Value;
-                
+                tweenTimer.ValueRW.Value = tweenDuration.ValueRO.Value;
+
                 ecb.AddComponent<TweenForceOutput>(entity);
                 ecb.RemoveComponent<TweenRequestPlaying>(entity);
 
@@ -122,7 +126,7 @@ namespace BreezeBlockGames.HyperTween.UnityShared.ECS.Structural.Systems
                         Event = TweenJournal.Event.UpdatedTimer,
                         Value = tweenDuration.ValueRO.Value
                     });
-                    
+
                     tweenJournalSingleton.ValueRW.LiteEntries.Add(new TweenJournal.LiteEntry()
                     {
                         Entity = entity,
@@ -131,7 +135,7 @@ namespace BreezeBlockGames.HyperTween.UnityShared.ECS.Structural.Systems
                     });
                 }
             }
-            
+
             _tweenJournalAccess.AddDependency(ref state);
         }
     }

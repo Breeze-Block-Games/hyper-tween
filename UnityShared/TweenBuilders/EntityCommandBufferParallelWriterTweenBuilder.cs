@@ -8,9 +8,12 @@ namespace BreezeBlockGames.HyperTween.UnityShared.TweenBuilders
     public struct EntityCommandBufferParallelWriterTweenBuilder : ITweenBuilder
     {
         private EntityCommandBuffer.ParallelWriter _entityCommandBuffer;
-        
-        [field:NativeDisableUnsafePtrRestriction]
-        public WorldUnmanaged WorldUnmanaged { get; }
+
+        [field: NativeDisableUnsafePtrRestriction]
+        public WorldUnmanaged WorldUnmanaged
+        {
+            get;
+        }
 
         public EntityCommandBufferParallelWriterTweenBuilder(WorldUnmanaged worldUnmanaged, EntityCommandBuffer.ParallelWriter entityCommandBuffer)
         {
@@ -60,7 +63,7 @@ namespace BreezeBlockGames.HyperTween.UnityShared.TweenBuilders
 
         public void AddComponentObject<T>(Entity e, T componentData) where T : class
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException("Parallel writers cannot add managed components. Use EntityManagerTweenBuilder or a main-thread EntityCommandBufferTweenBuilder.");
         }
 
         public DynamicBuffer<T> AddBuffer<T>(Entity e) where T : unmanaged, IBufferElementData

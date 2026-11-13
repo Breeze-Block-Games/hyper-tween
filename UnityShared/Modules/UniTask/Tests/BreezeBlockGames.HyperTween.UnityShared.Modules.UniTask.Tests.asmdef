@@ -1,0 +1,28 @@
+{
+    "name": "BreezeBlockGames.HyperTween.UnityShared.Modules.UniTask.Tests",
+    "references": [
+        "BreezeBlockGames.HyperTween.UnityShared",
+        "BreezeBlockGames.HyperTween.UnityShared.Modules.UniTask",
+        "Unity.Entities",
+        "Unity.Collections",
+        "Unity.Mathematics",
+        "UniTask",
+        "Unity.Entities.Hybrid"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS",
+        "!HYPER_TWEEN_DISABLE_MODULE_UNITASK",
+        "UNITASK_EXISTS"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.cysharp.unitask",
+            "expression": "0",
+            "define": "UNITASK_EXISTS"
+        }
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ]
+}

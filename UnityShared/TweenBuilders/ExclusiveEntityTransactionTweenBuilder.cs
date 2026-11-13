@@ -8,9 +8,12 @@ namespace BreezeBlockGames.HyperTween.UnityShared.TweenBuilders
     {
         private ExclusiveEntityTransaction _exclusiveEntityTransaction;
         private EntityArchetype _emptyArchetype;
-        
-        [field:NativeDisableUnsafePtrRestriction]
-        public WorldUnmanaged WorldUnmanaged { get; }
+
+        [field: NativeDisableUnsafePtrRestriction]
+        public WorldUnmanaged WorldUnmanaged
+        {
+            get;
+        }
 
         public ExclusiveEntityTransactionTweenBuilder(WorldUnmanaged worldUnmanaged, ExclusiveEntityTransaction exclusiveEntityTransaction)
         {
@@ -36,7 +39,7 @@ namespace BreezeBlockGames.HyperTween.UnityShared.TweenBuilders
 
         public void SetName(Entity entity, in FixedString64Bytes name)
         {
-            throw new System.NotImplementedException();
+            throw new System.NotSupportedException("Exclusive transactions cannot set entity names. Use an EntityManager or command-buffer builder.");
         }
 
         public void AddComponent<T>(Entity e) where T : unmanaged, IComponentData
@@ -69,7 +72,7 @@ namespace BreezeBlockGames.HyperTween.UnityShared.TweenBuilders
 
         public void AddComponentObject<T>(Entity e, T componentData) where T : class
         {
-            throw new System.NotImplementedException();
+            throw new System.NotSupportedException("Exclusive transactions cannot add managed components. Use an EntityManager or main-thread command-buffer builder.");
         }
 
         public DynamicBuffer<T> AddBuffer<T>(Entity e) where T : unmanaged, IBufferElementData

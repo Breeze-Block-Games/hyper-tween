@@ -7,13 +7,14 @@ namespace BreezeBlockGames.HyperTween.UnityShared.ECS.Structural.Systems
 {
     [UpdateInGroup(typeof(UpdateTweenSystemGroup))]
     [UpdateAfter(typeof(AddTweenFromSystemGroup))]
+    [UpdateBefore(typeof(TweenOutputSystemGroup))]
     public partial class AddTweenFromECBSystem : EntityCommandBufferSystem
     {
         public unsafe struct Singleton : IComponentData, IECBSingleton
         {
             private UnsafeList<EntityCommandBuffer>* _pendingBuffers;
             private AllocatorManager.AllocatorHandle _allocator;
-            
+
             public EntityCommandBuffer CreateCommandBuffer(WorldUnmanaged world)
             {
                 return EntityCommandBufferSystem.CreateCommandBuffer(ref *_pendingBuffers, _allocator, world);
@@ -34,7 +35,7 @@ namespace BreezeBlockGames.HyperTween.UnityShared.ECS.Structural.Systems
                 _allocator = allocatorIn;
             }
         }
-         
+
         protected override void OnCreate()
         {
             base.OnCreate();

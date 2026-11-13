@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Entities;
 
 namespace BreezeBlockGames.HyperTween.UnityShared.API
 {
@@ -23,11 +24,20 @@ namespace BreezeBlockGames.HyperTween.UnityShared.API
                 _withJournalingStack->RemoveAt(lastIndex);
             }
         }
-        
-        private struct Entry 
+
+        private struct Entry
         {
             public int SortOrder;
             public TweenHandle TweenHandle;
+        }
+
+        private struct Delimiter
+        {
+            public int EntryIndex, CreatedIndex;
+        }
+        private struct CreatedTween
+        {
+            public TweenHandle Handle; public bool Destroyed;
         }
 
         private struct EntryComparer : IComparer<Entry>
@@ -39,25 +49,28 @@ namespace BreezeBlockGames.HyperTween.UnityShared.API
         }
 
         private readonly UnsafeList<Entry>* _entries;
-        private readonly UnsafeList<int>* _delimiters;
+        private readonly UnsafeList<Delimiter>* _delimiters;
         private readonly UnsafeList<bool>* _withJournalingStack;
-        
-        private TweenCollection(UnsafeList<Entry>* entries, UnsafeList<int>* delimiters, UnsafeList<bool>* withJournalingStack)
+        private readonly UnsafeList<CreatedTween>* _createdTweens;
+
+        private TweenCollection(UnsafeList<Entry>* entries, UnsafeList<Delimiter>* delimiters, UnsafeList<bool>* withJournalingStack, UnsafeList<CreatedTween>* createdTweens)
         {
             _withJournalingStack = withJournalingStack;
             _entries = entries;
             _delimiters = delimiters;
+            _createdTweens = createdTweens;
         }
-        
-        public static TweenCollection Create(bool withJournaling = HyperTweenFactory.JournalingByDefault) 
+
+        public static TweenCollection Create(bool withJournaling = HyperTweenFactory.JournalingByDefault)
         {
             var entries = UnsafeList<Entry>.Create(8, Allocator.Persistent);
-            var delimiters = UnsafeList<int>.Create(8, Allocator.Persistent);
+            var delimiters = UnsafeList<Delimiter>.Create(8, Allocator.Persistent);
+            var createdTweens = UnsafeList<CreatedTween>.Create(8, Allocator.Persistent);
             var withJournalingStack = UnsafeList<bool>.Create(8, Allocator.Persistent);
 
             withJournalingStack->Add(withJournaling);
-            
-            return new TweenCollection(entries, delimiters, withJournalingStack);
+
+            return new TweenCollection(entries, delimiters, withJournalingStack, createdTweens);
         }
 
         public TweenFactory<CollectionTweenBuilder> CreateTweenFactory()
@@ -75,7 +88,7 @@ namespace BreezeBlockGames.HyperTween.UnityShared.API
                 throw new InvalidOperationException("HYPER_TWEEN_ENABLE_JOURNAL is not defined");
             }
 #endif
-            
+
             return new JournalingScope(_withJournalingStack, withJournaling);
         }
 
@@ -84,10 +97,10 @@ namespace BreezeBlockGames.HyperTween.UnityShared.API
             var lastIndex = _withJournalingStack->Length - 1;
             return _withJournalingStack->ElementAt(lastIndex);
         }
-        
+
         public void Push()
         {
-            _delimiters->Add(_entries->Length);
+            _delimiters->Add(new Delimiter { EntryIndex = _entries->Length, CreatedIndex = _createdTweens->Length });
         }
 
         /// <summary>
@@ -97,29 +110,28 @@ namespace BreezeBlockGames.HyperTween.UnityShared.API
         /// </summary>
         public TweenHandle Pop(in FixedString64Bytes name)
         {
-            var factory = HyperTweenFactory.Get(GetWithJournaling());
-            var lastIndex = _delimiters->Length - 1;
-            var delimiter = _delimiters->ElementAt(lastIndex);
-            _delimiters->RemoveAt(lastIndex);
+            var delimiter = TakeDelimiter();
+            var factory = CreateTweenFactory();
+            if (_delimiters->Length == 0)
+                _createdTweens->RemoveRange(delimiter.CreatedIndex, _createdTweens->Length - delimiter.CreatedIndex);
+            var numEntries = _entries->Length - delimiter.EntryIndex;
 
-            var numEntries = _entries->Length - delimiter;
-            
             // We can just early-out here with a null tween handle
             if (numEntries == 0)
             {
                 return factory.CreateNullTween();
             }
-            
+
             var poppedEntries = new NativeArray<Entry>(numEntries, Allocator.Temp);
             try
             {
-                for (int i = delimiter; i < _entries->Length; i++)
+                for (int i = delimiter.EntryIndex; i < _entries->Length; i++)
                 {
-                    poppedEntries[i - delimiter] = _entries->ElementAt(i);
+                    poppedEntries[i - delimiter.EntryIndex] = _entries->ElementAt(i);
                 }
-                _entries->RemoveRange(delimiter, numEntries);
+                _entries->RemoveRange(delimiter.EntryIndex, numEntries);
                 poppedEntries.Sort(new EntryComparer());
-            
+
                 var index = default(int?);
                 var groupStart = 0;
                 var serialBuilder = factory.Serial(in name);
@@ -133,7 +145,7 @@ namespace BreezeBlockGames.HyperTween.UnityShared.API
                     }
                     serialBuilder.Append(parallelBuilder.Build());
                 }
-                
+
                 for (var i = 0; i < poppedEntries.Length; i++)
                 {
                     var entry = poppedEntries[i];
@@ -147,7 +159,7 @@ namespace BreezeBlockGames.HyperTween.UnityShared.API
                         continue;
                     }
                     index = entry.SortOrder;
-                    
+
                     AddParallelGroup(groupStart, i, in name);
                     groupStart = i;
                 }
@@ -162,19 +174,84 @@ namespace BreezeBlockGames.HyperTween.UnityShared.API
             }
         }
 
+        private Delimiter TakeDelimiter()
+        {
+            if (_delimiters->Length == 0)
+                throw new InvalidOperationException("No tween collection group is open.");
+            var index = _delimiters->Length - 1;
+            var delimiter = _delimiters->ElementAt(index);
+            _delimiters->RemoveAt(index);
+            return delimiter;
+        }
+
+        internal void TrackCreatedEntity(Entity entity, WorldUnmanaged world)
+        {
+            if (_delimiters->Length != 0)
+                _createdTweens->Add(new CreatedTween { Handle = new TweenHandle(entity, world) });
+        }
+
+        internal void MarkDestroyedEntity(Entity entity, WorldUnmanaged world)
+        {
+            for (var i = 0; i < _createdTweens->Length; i++)
+            {
+                ref var created = ref _createdTweens->ElementAt(i);
+                if (created.Handle.Entity == entity && created.Handle.World.Equals(world))
+                    created.Destroyed = true;
+            }
+        }
+
+        /// <summary>Discard the current unplayed group and its created entities, preserving its enclosing group.</summary>
+        public void Discard()
+        {
+            var delimiter = TakeDelimiter();
+            var seen = new HashSet<(Entity, WorldUnmanaged)>();
+            var destroy = new List<TweenHandle>();
+            for (var i = 0; i < _createdTweens->Length; i++)
+            {
+                var created = _createdTweens->ElementAt(i);
+                if (created.Destroyed && !created.Handle.IsNull)
+                    seen.Add((created.Handle.Entity, created.Handle.World));
+            }
+            void Add(TweenHandle handle)
+            {
+                if (!handle.IsNull && seen.Add((handle.Entity, handle.World)))
+                    destroy.Add(handle);
+            }
+            for (var i = _createdTweens->Length - 1; i >= delimiter.CreatedIndex; i--)
+                Add(_createdTweens->ElementAt(i).Handle);
+            for (var i = _entries->Length - 1; i >= delimiter.EntryIndex; i--)
+                Add(_entries->ElementAt(i).TweenHandle);
+            _createdTweens->RemoveRange(delimiter.CreatedIndex, _createdTweens->Length - delimiter.CreatedIndex);
+            _entries->RemoveRange(delimiter.EntryIndex, _entries->Length - delimiter.EntryIndex);
+
+            List<Exception>? errors = null;
+            foreach (var handle in destroy)
+            {
+                try
+                {
+                    handle.GetBuilder().TweenBuilder.DestroyEntity(handle.Entity);
+                }
+                catch (Exception error) { (errors ??= new List<Exception>()).Add(error); }
+            }
+            if (errors != null)
+                throw new AggregateException(errors);
+        }
+
         public void AddTween(int sortOrder, TweenHandle tweenHandle)
         {
             _entries->Add(new Entry
             {
-                SortOrder = sortOrder, TweenHandle = tweenHandle
+                SortOrder = sortOrder,
+                TweenHandle = tweenHandle
             });
         }
 
         public void Dispose()
         {
-            _entries->Dispose();
-            _delimiters->Dispose();
-            _withJournalingStack->Dispose();
+            UnsafeList<Entry>.Destroy(_entries);
+            UnsafeList<Delimiter>.Destroy(_delimiters);
+            UnsafeList<bool>.Destroy(_withJournalingStack);
+            UnsafeList<CreatedTween>.Destroy(_createdTweens);
         }
     }
 }

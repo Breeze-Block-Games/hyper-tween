@@ -13,7 +13,7 @@ namespace BreezeBlockGames.HyperTween.UnityShared.ECS.Update.Systems
     partial struct UpdateTweenParametersHermiteEasing : ISystem
     {
         private TweenJournalAccess _tweenJournalAccess;
-        
+
         public void OnCreate(ref SystemState state)
         {
             TweenJournalAccess.TryCreate(ref state, out _tweenJournalAccess);
@@ -23,15 +23,15 @@ namespace BreezeBlockGames.HyperTween.UnityShared.ECS.Update.Systems
         public void OnUpdate(ref SystemState state)
         {
             var hasJournalAccess = _tweenJournalAccess.TryGet(ref state, out var tweenJournalSingleton);
-            
+
             foreach (var (tweenParameter, tweenTimer, tweenDuration, tweenHermiteEasing, entity) in SystemAPI
                          .Query<RefRW<TweenParameter>, RefRO<TweenTimer>, RefRO<TweenDuration>, RefRO<TweenHermiteEasing>>()
                          .WithAny<TweenPlaying, TweenForceOutput>()
                          .WithOptions(EntityQueryOptions.FilterWriteGroup)
                          .WithEntityAccess())
             {
-                var linearParameter = tweenTimer.ValueRO.Value * tweenDuration.ValueRO.InverseValue;
-                
+                var linearParameter = tweenDuration.ValueRO.Value <= 0f ? 1f : tweenTimer.ValueRO.Value * tweenDuration.ValueRO.InverseValue;
+
                 tweenParameter.ValueRW.Value = tweenHermiteEasing.ValueRO.Interpolate(linearParameter);
 
                 if (hasJournalAccess && SystemAPI.HasComponent<TweenJournal>(entity))
@@ -44,7 +44,7 @@ namespace BreezeBlockGames.HyperTween.UnityShared.ECS.Update.Systems
                     });
                 }
             }
-            
+
             _tweenJournalAccess.AddDependency(ref state);
         }
     }

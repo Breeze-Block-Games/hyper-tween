@@ -12,9 +12,11 @@ namespace BreezeBlockGames.HyperTween.UnityShared.Modules.Timeline.Components
     {
         public UnityEngine.Playables.PlayableDirector PlayableDirector;
         public PlayableAsset PlayableAsset;
-        
+
         public void Invoke(in TweenDuration tweenDuration)
         {
+            if (!PlayableDirector || !PlayableAsset)
+                return;
             if (!PlayableDirector.gameObject.activeInHierarchy)
             {
                 Debug.LogError($"Cannot play disabled {nameof(PlayableDirector)}: {PlayableDirector.name}", PlayableDirector);
@@ -22,7 +24,7 @@ namespace BreezeBlockGames.HyperTween.UnityShared.Modules.Timeline.Components
             }
 
             PlayableDirector.Play(PlayableAsset);
-            
+
             if (!PlayableDirector.playableGraph.IsValid())
             {
                 PlayableDirector.RebuildGraph();

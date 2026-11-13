@@ -33,13 +33,13 @@ public class DetectConflictsSystemGenerator : ISourceGenerator
         {
             var compilation = context.Compilation;
             var syntaxTrees = compilation.SyntaxTrees;
-            
-            var autoDetectConflictsStructs = new List<(ITypeSymbol,ITypeSymbol?)>();
+
+            var autoDetectConflictsStructs = new List<(ITypeSymbol, ITypeSymbol?)>();
 
             foreach (var syntaxTree in syntaxTrees)
             {
                 var semanticModel = compilation.GetSemanticModel(syntaxTree);
-                
+
                 var structDeclarationSyntaxes = syntaxTree.GetRoot()
                     .DescendantNodes()
                     .OfType<StructDeclarationSyntax>();
@@ -63,23 +63,23 @@ public class DetectConflictsSystemGenerator : ISourceGenerator
                     {
                         continue;
                     }
-                    
+
                     var instanceIdComponentTypedConstant = autoDetectConflictsAttributeData.ConstructorArguments
                         .FirstOrDefault();
-                    
+
                     // TODO: Validate that instanceIdComponentType only contains an int, and is an IComponent
-                    
+
                     autoDetectConflictsStructs.Add((structSymbol, instanceIdComponentTypedConstant.Kind != TypedConstantKind.Error ? instanceIdComponentTypedConstant.GetExpressedType() : default(ITypeSymbol)));
                 }
             }
 
             var generatedPartials = GenerateDetectConflictsHelper(context.Compilation.AssemblyName!, autoDetectConflictsStructs);
-            
+
             foreach (var tuple in generatedPartials)
             {
                 var (hint, source) = tuple;
                 context.AddSource($"{hint}.g.cs", source);
-                
+
                 sourceOutput.OutputSourceToFile(
                     $"Temp/GeneratedCode/{context.Compilation.Assembly.Name}/{hint}.g.cs",
                     () => source);
@@ -98,7 +98,7 @@ public class DetectConflictsSystemGenerator : ISourceGenerator
         }
     }
 
-    private IEnumerable<(string,string)> GenerateDetectConflictsHelper(string assemblyName, List<(ITypeSymbol, ITypeSymbol?)> conflictTypeSymbols)
+    private IEnumerable<(string, string)> GenerateDetectConflictsHelper(string assemblyName, List<(ITypeSymbol, ITypeSymbol?)> conflictTypeSymbols)
     {
         var componentNames = conflictTypeSymbols
             .Select(tuple => (tuple.Item1.ToFullName(), tuple.Item2?.ToFullName()))
@@ -110,11 +110,11 @@ public class DetectConflictsSystemGenerator : ISourceGenerator
         }
 
         var dynamicTypeInfoDefinitions = string.Join("\n", componentNames
-            .Select( (_,i) => $"[ReadOnly] public TweenComponentMetaData TweenComponentMetaData{i};")
+            .Select((_, i) => $"[ReadOnly] public TweenComponentMetaData TweenComponentMetaData{i};")
             .ToArray());
-        
+
         var initDynamicTypeInfos = string.Join("\n", componentNames
-            .Select( (tuple,i) =>
+            .Select((tuple, i) =>
             {
                 if (tuple.Item2 != null)
                 {
@@ -126,15 +126,15 @@ public class DetectConflictsSystemGenerator : ISourceGenerator
             .ToArray());
 
         var updateDynamicTypeInfos = string.Join("\n", componentNames
-            .Select( (_,i) => $"TweenComponentMetaData{i}.Update(ref state);")
+            .Select((_, i) => $"TweenComponentMetaData{i}.Update(ref state);")
             .ToArray());
-        
+
         var componentTypes = string.Join(",\n", componentNames
             .Select(tuple => $"ComponentType.ReadOnly(typeof({tuple.Item1}))")
             .ToArray());
 
         yield return ("TweenComponentMetaDataContainer"
-            ,$$"""
+            , $$"""
              using Unity.Entities;
              using Unity.Collections;
              using BreezeBlockGames.HyperTween.UnityShared.ECS.ConflictDetection.Systems;
@@ -199,7 +199,7 @@ public class DetectConflictsSystemGenerator : ISourceGenerator
               }
               """
         );
-        
+
         yield return ("AddToConflictLookupSystem",
             $$"""
             using Unity.Burst;
@@ -308,7 +308,7 @@ public class DetectConflictsSystemGenerator : ISourceGenerator
                 }
             }
             """);
-        
+
         yield return ("RemoveFromConflictLookupSystem",
             $$"""
             using Unity.Burst;
@@ -345,9 +345,7 @@ public class DetectConflictsSystemGenerator : ISourceGenerator
                 
                         _onStopQuery = state.GetEntityQuery(new EntityQueryBuilder(Allocator.Temp)
                             .WithAny(ref _componentTypes)
-                            .WithAll<TweenOnStop>()
-                            // Don't remove Tweens that have conflicted - we know the target has been taken over by another entity
-                            .WithNone<TweenConflicted>());
+                            .WithAll<TweenOnStop>());
                             
                         _conflictLookupQuery = state.GetEntityQuery(ComponentType.ReadWrite<ConflictLookup>());
             

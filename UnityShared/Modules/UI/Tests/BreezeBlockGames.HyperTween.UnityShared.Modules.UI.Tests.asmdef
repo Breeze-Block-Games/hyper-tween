@@ -1,0 +1,21 @@
+{
+    "name": "BreezeBlockGames.HyperTween.UnityShared.Modules.UI.Tests",
+    "references": [
+        "BreezeBlockGames.HyperTween.UnityShared",
+        "BreezeBlockGames.HyperTween.UnityShared.Modules.UI",
+        "Unity.Entities",
+        "Unity.Collections",
+        "Unity.Mathematics",
+        "UnityEngine.UI",
+        "Unity.Entities.Hybrid"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS",
+        "!HYPER_TWEEN_DISABLE_MODULE_UI"
+    ],
+    "versionDefines": [],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ]
+}

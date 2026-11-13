@@ -19,30 +19,32 @@ namespace BreezeBlockGames.HyperTween.UnityShared.ECS.Sequencing.Systems
         private struct GatherData
         {
             public int Count;
-            public float MaxDurationOverflow;
+            public float MinDurationOverflow;
         }
 
         private TweenJournalAccess _tweenJournalAccess;
-        
+
         public void OnCreate(ref SystemState state)
         {
             state.RequireForUpdate<TweenStructuralChangeECBSystem.Singleton>();
-            
+            state.RequireForUpdate<TweenStructuralChangeSystemGroup.TimeAdvance>();
+
             TweenJournalAccess.TryCreate(ref state, out _tweenJournalAccess);
         }
- 
+
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
             var ecbSystem = SystemAPI.GetSingleton<TweenStructuralChangeECBSystem.Singleton>();
             var ecb = ecbSystem.CreateCommandBuffer(state.WorldUnmanaged);
+            var timeAdvance = SystemAPI.GetSingleton<TweenStructuralChangeSystemGroup.TimeAdvance>().Value;
 
             NativeHashMap<Entity, GatherData> gatherMap = new NativeHashMap<Entity, GatherData>(16, Allocator.Temp);
 
             try
             {
                 var hasTweenJournalAccess = _tweenJournalAccess.TryGet(ref state, out var tweenJournalSingleton);
-                
+
                 foreach (var (tweenIncrementGatherOnStop, tweenDurationOverflow, entity) in SystemAPI
                              .Query<RefRO<TweenSignalJoinOnStop>, RefRO<TweenDurationOverflow>>()
                              .WithAll<TweenOnStop>()
@@ -59,12 +61,12 @@ namespace BreezeBlockGames.HyperTween.UnityShared.ECS.Sequencing.Systems
                             Event = TweenJournal.Event.CompleteSignalJoinOnStop
                         });
                     }
-                    
+
                     if (gatherMap.TryGetValue(tweenEntity, out var gatherData))
                     {
                         gatherData.Count++;
-                        gatherData.MaxDurationOverflow = math.max(gatherData.MaxDurationOverflow, tweenDurationOverflow.ValueRO.Value);
-                        
+                        gatherData.MinDurationOverflow = math.min(gatherData.MinDurationOverflow, tweenDurationOverflow.ValueRO.Value);
+
                         gatherMap[tweenEntity] = gatherData;
                     }
                     else
@@ -72,35 +74,39 @@ namespace BreezeBlockGames.HyperTween.UnityShared.ECS.Sequencing.Systems
                         gatherMap.Add(tweenEntity, new GatherData()
                         {
                             Count = 1,
-                            MaxDurationOverflow = tweenDurationOverflow.ValueRO.Value
+                            MinDurationOverflow = tweenDurationOverflow.ValueRO.Value
                         });
                     }
                 }
-                
+
                 foreach (var pair in gatherMap)
                 {
                     var existingGather = SystemAPI.GetComponent<TweenStopOnJoin>(pair.Key);
+                    existingGather.MinimumDurationOverflow = existingGather.CurrentSignals > 0 && existingGather.LastSignalAdvance == timeAdvance
+                        ? math.min(existingGather.MinimumDurationOverflow, pair.Value.MinDurationOverflow)
+                        : pair.Value.MinDurationOverflow;
+                    existingGather.LastSignalAdvance = timeAdvance;
                     existingGather.CurrentSignals += pair.Value.Count;
-                    
+
                     ecb.SetComponent(pair.Key, existingGather);
 
                     if (existingGather.CurrentSignals >= existingGather.RequiredSignals)
                     {
-                        // We only care about the duration overflow in this frame
+                        // Include every structural pass of this logical time advance.
                         ecb.SetComponent(pair.Key, new TweenDurationOverflow()
                         {
-                            Value = pair.Value.MaxDurationOverflow
+                            Value = existingGather.MinimumDurationOverflow
                         });
-                        
+
                         ecb.RemoveComponent<TweenRequestPlaying>(pair.Key);
                     }
-                    
+
                     if (existingGather.CurrentSignals > existingGather.RequiredSignals)
                     {
                         Debug.LogError($"Gather exceeded threshold: {pair.Key}");
                     }
                 }
-                
+
                 _tweenJournalAccess.AddDependency(ref state);
             }
             finally

@@ -23,3 +23,13 @@ dotnet publish SourceGenerators/Source~/HyperTweenGenerators/HyperTweenGenerator
 Add `DOTS_OUTPUT_SOURCEGEN_FILES` to the Unity project's scripting define symbols and recompile. When Unity supplies its project-path additional file, the generators write copies under `Temp/GeneratedCode/<AssemblyName>/` and append diagnostic information to `Temp/GeneratedCode/SourceGen.log` in the Unity project. `SOURCEGEN_DISABLE_PROJECT_PATH_OUTPUT=1` disables this optional file output; generated sources still participate in compilation.
 
 The package-owned output and Roslyn helpers are in `SourceGenerators/Source~/HyperTweenGenerators/GeneratorHelpers.cs`. The solution at `SourceGenerators/Source~/SourceGenerators.sln` can be opened from the package root for source debugging. To reproduce a Unity compilation outside the editor, use the compiler command and response files recorded in that project's editor log, with the Unity project root as the working directory.
+
+## Compiler regressions
+
+With .NET 9 and an imported Unity project using this package, run the consumer compiler checks against the shipped artifact:
+
+```sh
+dotnet run --project SourceGenerators/Source~/HyperTweenGenerators.Tests -- /path/to/unity-project "$PWD/SourceGenerators/HyperTweenGenerators.dll"
+```
+
+The checks obtain the real Unity references from the project's HyperTween Bee response file, generate consumers with multiple output structs in one file and invocation ordering attributes, and emit the resulting assemblies. They fail on generator diagnostics or consumer compiler errors. Run them again after publishing the generator to verify the artifact actually distributed with the package. Native Unity tests cover runtime behavior separately.

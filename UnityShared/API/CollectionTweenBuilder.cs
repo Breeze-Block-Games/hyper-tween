@@ -7,7 +7,7 @@ namespace BreezeBlockGames.HyperTween.UnityShared.API
     public struct CollectionTweenBuilder : ITweenBuilder
     {
         internal readonly TweenCollection TweenCollection;
-        
+
         private EntityCommandBufferTweenBuilder _subTweenBuilder;
 
         public CollectionTweenBuilder(EntityCommandBufferTweenBuilder subTweenBuilder, TweenCollection tweenCollection)
@@ -20,17 +20,22 @@ namespace BreezeBlockGames.HyperTween.UnityShared.API
 
         public Entity CreateEntity()
         {
-            return _subTweenBuilder.CreateEntity();
+            var entity = _subTweenBuilder.CreateEntity();
+            TweenCollection.TrackCreatedEntity(entity, WorldUnmanaged);
+            return entity;
         }
 
         public void DestroyEntity(Entity entity)
         {
             _subTweenBuilder.DestroyEntity(entity);
+            TweenCollection.MarkDestroyedEntity(entity, WorldUnmanaged);
         }
 
         public void Instantiate(Entity prefab, NativeArray<Entity> entities)
         {
             _subTweenBuilder.Instantiate(prefab, entities);
+            foreach (var entity in entities)
+                TweenCollection.TrackCreatedEntity(entity, WorldUnmanaged);
         }
 
         public void SetName(Entity entity, in FixedString64Bytes name)

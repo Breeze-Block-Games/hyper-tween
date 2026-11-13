@@ -14,7 +14,7 @@ namespace BreezeBlockGames.HyperTween.UnityShared.ECS.Update.Systems
     partial struct UpdateTweenParametersLinear : ISystem
     {
         private TweenJournalAccess _tweenJournalAccess;
-        
+
         public void OnCreate(ref SystemState state)
         {
             TweenJournalAccess.TryCreate(ref state, out _tweenJournalAccess);
@@ -24,14 +24,14 @@ namespace BreezeBlockGames.HyperTween.UnityShared.ECS.Update.Systems
         public void OnUpdate(ref SystemState state)
         {
             var hasJournalAccess = _tweenJournalAccess.TryGet(ref state, out var tweenJournalSingleton);
-            
+
             foreach (var (tweenParameter, tweenTimer, tweenDuration, entity) in SystemAPI
                          .Query<RefRW<TweenParameter>, RefRO<TweenTimer>, RefRO<TweenDuration>>()
                          .WithAny<TweenPlaying, TweenForceOutput>()
                          .WithOptions(EntityQueryOptions.FilterWriteGroup)
                          .WithEntityAccess())
             {
-                tweenParameter.ValueRW.Value = tweenTimer.ValueRO.Value * tweenDuration.ValueRO.InverseValue;
+                tweenParameter.ValueRW.Value = tweenDuration.ValueRO.Value <= 0f ? 1f : tweenTimer.ValueRO.Value * tweenDuration.ValueRO.InverseValue;
 
                 if (hasJournalAccess && SystemAPI.HasComponent<TweenJournal>(entity))
                 {
@@ -43,7 +43,7 @@ namespace BreezeBlockGames.HyperTween.UnityShared.ECS.Update.Systems
                     });
                 }
             }
-            
+
             // Tweens with no duration need to have their parameter forced to 1
             foreach (var (tweenParameter, entity) in SystemAPI
                          .Query<RefRW<TweenParameter>>()
@@ -53,7 +53,7 @@ namespace BreezeBlockGames.HyperTween.UnityShared.ECS.Update.Systems
                          .WithEntityAccess())
             {
                 tweenParameter.ValueRW.Value = 1f;
-                
+
                 if (hasJournalAccess && SystemAPI.HasComponent<TweenJournal>(entity))
                 {
                     tweenJournalSingleton.ValueRW.LiteEntries.Add(new TweenJournal.LiteEntry()
@@ -64,7 +64,7 @@ namespace BreezeBlockGames.HyperTween.UnityShared.ECS.Update.Systems
                     });
                 }
             }
-            
+
             _tweenJournalAccess.AddDependency(ref state);
         }
     }

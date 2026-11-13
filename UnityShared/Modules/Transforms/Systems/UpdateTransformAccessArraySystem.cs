@@ -21,7 +21,7 @@ namespace BreezeBlockGames.HyperTween.UnityShared.Modules.Transforms.Systems
         private ComponentLookup<TransformInstanceId> _transformInstanceIdLookup;
 
         private EntityQuery _removalQuery, _additionQuery, _missingLocalToWorldQuery;
-        
+
         public void OnCreate(ref SystemState state)
         {
             state.RequireForUpdate<TweenTransformStructuralChangeECBSystem.Singleton>();
@@ -32,7 +32,7 @@ namespace BreezeBlockGames.HyperTween.UnityShared.Modules.Transforms.Systems
                 IndexLookup = new NativeHashMap<Entity, int>(64, Allocator.Persistent),
             });
             state.RequireForUpdate<TransformAccessSingleton>();
-            
+
             _transformInstanceIdLookup = state.GetComponentLookup<TransformInstanceId>();
 
             _removalQuery = new EntityQueryBuilder(Allocator.Temp)
@@ -45,7 +45,7 @@ namespace BreezeBlockGames.HyperTween.UnityShared.Modules.Transforms.Systems
                 .WithAny<TweenPlaying, TweenForceOutput>()
                 .WithNone<InTransformAccessArray, InvalidTransformInstance>()
                 .Build(ref state);
-            
+
             _missingLocalToWorldQuery = new EntityQueryBuilder(Allocator.Temp)
                 .WithAll<TransformInstanceId>()
                 .WithAny<TweenPlaying, TweenForceOutput>()
@@ -56,26 +56,26 @@ namespace BreezeBlockGames.HyperTween.UnityShared.Modules.Transforms.Systems
         public void OnDestroy(ref SystemState state)
         {
             ref var conflictLookup = ref SystemAPI.GetSingletonRW<TransformAccessSingleton>().ValueRW;
-            conflictLookup.Dispose();        
+            conflictLookup.Dispose();
         }
-        
+
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
             var singleton = SystemAPI.GetSingleton<TransformAccessSingleton>();
-            
+
             var ecbSingleton = SystemAPI.GetSingleton<TweenTransformStructuralChangeECBSystem.Singleton>();
             var ecb = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
-            
+
             _transformInstanceIdLookup.Update(ref state);
-            
+
             var requiredCapacity = math.ceilpow2(singleton.EntityLookup.Length - _removalQuery.CalculateEntityCount() + _additionQuery.CalculateEntityCount());
             if (singleton.EntityLookup.Capacity < requiredCapacity)
             {
                 singleton.EntityLookup.Capacity = requiredCapacity;
                 singleton.TransformAccessArray.capacity = requiredCapacity;
             }
-            
+
             foreach (var (_, entity) in SystemAPI
                          .Query<RefRO<InTransformAccessArray>>()
                          .WithNone<TweenPlaying, TweenForceOutput>()
@@ -84,13 +84,15 @@ namespace BreezeBlockGames.HyperTween.UnityShared.Modules.Transforms.Systems
                 var removeIndex = singleton.IndexLookup[entity];
                 var backEntity = singleton.EntityLookup[^1];
 
-                singleton.IndexLookup[backEntity] = removeIndex;
+                singleton.IndexLookup.Remove(entity);
+                if (backEntity != entity)
+                    singleton.IndexLookup[backEntity] = removeIndex;
                 singleton.EntityLookup.RemoveAtSwapBack(removeIndex);
                 singleton.TransformAccessArray.RemoveAtSwapBack(removeIndex);
             }
-            
+
             ecb.RemoveComponent<InTransformAccessArray>(_removalQuery, EntityQueryCaptureMode.AtPlayback);
-            
+
             ecb.AddComponent<InTransformAccessArray>(_additionQuery, EntityQueryCaptureMode.AtPlayback);
 
             foreach (var (transformInstanceId, localTransform, entity) in SystemAPI
@@ -103,21 +105,26 @@ namespace BreezeBlockGames.HyperTween.UnityShared.Modules.Transforms.Systems
 
                 singleton.TransformAccessArray.Add(transformInstanceId.ValueRO.Value);
 
-                var transformHandle = singleton.TransformAccessArray.GetTransformHandle(length);
-                
-                localTransform.ValueRW.Position = transformHandle.localPosition;
-                localTransform.ValueRW.Rotation = transformHandle.localRotation;
-                localTransform.ValueRW.Scale = transformHandle.localScale.x;
-                
-                // Yep, if the transform is invalid, Unity just doesn't add to the array, no errors or anything...
+                // A destroyed target may not be added at all. Check before indexing or reading it.
                 if (length == singleton.TransformAccessArray.length)
                 {
-                    Debug.LogError($"Failed to add to TransformAccessArray: {entity}");
                     ecb.RemoveComponent<InTransformAccessArray>(entity);
                     ecb.AddComponent<InvalidTransformInstance>(entity);
                     continue;
                 }
-                
+
+                var transformHandle = singleton.TransformAccessArray.GetTransformHandle(length);
+                if (!transformHandle.IsValid())
+                {
+                    singleton.TransformAccessArray.RemoveAtSwapBack(length);
+                    ecb.RemoveComponent<InTransformAccessArray>(entity);
+                    ecb.AddComponent<InvalidTransformInstance>(entity);
+                    continue;
+                }
+                localTransform.ValueRW.Position = transformHandle.localPosition;
+                localTransform.ValueRW.Rotation = transformHandle.localRotation;
+                localTransform.ValueRW.Scale = transformHandle.localScale.x;
+
                 singleton.IndexLookup[entity] = length;
                 singleton.EntityLookup.Add(entity);
             }

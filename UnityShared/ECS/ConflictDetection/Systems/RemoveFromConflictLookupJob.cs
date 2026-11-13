@@ -8,7 +8,7 @@ using Unity.Entities;
 
 namespace BreezeBlockGames.HyperTween.UnityShared.ECS.ConflictDetection.Systems
 {
-    
+
     [BurstCompile]
     public struct RemoveFromConflictLookupJob<TMetaDataContainer> : IJobChunk where TMetaDataContainer : unmanaged
     {
@@ -17,18 +17,18 @@ namespace BreezeBlockGames.HyperTween.UnityShared.ECS.ConflictDetection.Systems
 
         public TMetaDataContainer MetaDataContainer;
         public FieldEnumerable<TMetaDataContainer, TweenComponentMetaData> TweenComponentsMetaDataEnumerable;
-        
+
         public EntityTypeHandle EntityTypeHandle;
-        
+
         [ReadOnly]
         public ComponentTypeHandle<TweenTarget> TweenTargetTypeHandle;
 
         public int IntSize;
-        
+
         [BurstCompile]
         public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask,
             in v128 chunkEnabledMask)
-        { 
+        {
             var entities = chunk.GetNativeArray(EntityTypeHandle);
             var typeInfoEnumerator = TweenComponentsMetaDataEnumerable.GetEnumerator(ref MetaDataContainer);
 
@@ -43,13 +43,13 @@ namespace BreezeBlockGames.HyperTween.UnityShared.ECS.ConflictDetection.Systems
                 }
 
                 var instanceIdComponentTypeHandle = conflictTypeTuple.InstanceIdComponentTypeInfo.DynamicComponentTypeHandle;
-                
+
                 var hasTarget = false;
-                
-                if (chunk.Has(ref instanceIdComponentTypeHandle))
+
+                if (conflictTypeTuple.HasInstanceIdComponent && chunk.Has(ref instanceIdComponentTypeHandle))
                 {
                     hasTarget = true;
-                    
+
                     // Unity object IDs are 64-bit on newer editors; custom IDs may still be 32-bit.
                     var instanceIdSize = TypeManager.GetTypeInfo(conflictTypeTuple.InstanceIdComponentTypeInfo.ComponentType.TypeIndex).SizeInChunk;
                     var instanceIds = chunk.GetDynamicComponentDataArrayReinterpret<byte>(ref instanceIdComponentTypeHandle, instanceIdSize);
@@ -63,17 +63,16 @@ namespace BreezeBlockGames.HyperTween.UnityShared.ECS.ConflictDetection.Systems
                     {
                         var transformInstanceId = instanceIds32.IsCreated ? unchecked((ulong)(uint)instanceIds32[i]) : instanceIds64[i];
 
-                        if (!GameObjectTypeKeyToTweenMap.Remove(new InstanceIdKey(transformInstanceId, targetComponentType)))
-                        {
-                            throw new InvalidOperationException("Tween Entity does not exist in ConflictLookup");
-                        }
+                        var key = new InstanceIdKey(transformInstanceId, targetComponentType);
+                        if (GameObjectTypeKeyToTweenMap.TryGetValue(key, out var owner) && owner == entities[i])
+                            GameObjectTypeKeyToTweenMap.Remove(key);
                     }
                 }
-                
+
                 if (chunk.Has(ref TweenTargetTypeHandle))
                 {
                     hasTarget = true;
-                    
+
                     var tweenTargets = chunk.GetNativeArray(ref TweenTargetTypeHandle);
 
                     var enumerator = new ChunkEntityEnumerator(useEnabledMask, chunkEnabledMask, chunk.Count);
@@ -81,28 +80,26 @@ namespace BreezeBlockGames.HyperTween.UnityShared.ECS.ConflictDetection.Systems
                     {
                         var entity = tweenTargets[i].Target;
 
-                        if (!TargetToTweenMap.Remove(new EntityTypeKey(entity, targetComponentType)))
-                        {
-                            throw new InvalidOperationException("Tween Entity does not exist in ConflictLookup");
-                        }
+                        var key = new EntityTypeKey(entity, targetComponentType);
+                        if (TargetToTweenMap.TryGetValue(key, out var owner) && owner == entities[i])
+                            TargetToTweenMap.Remove(key);
                     }
                 }
-                
-                if(!hasTarget)
+
+                if (!hasTarget)
                 {
                     var enumerator = new ChunkEntityEnumerator(useEnabledMask, chunkEnabledMask, chunk.Count);
                     while (enumerator.NextEntityIndex(out var i))
                     {
                         var entity = entities[i];
-                        if (!TargetToTweenMap.Remove(new EntityTypeKey(entity, targetComponentType)))
-                        {
-                            throw new InvalidOperationException("Tween Entity does not exist in ConflictLookup");
-                        }
+                        var key = new EntityTypeKey(entity, targetComponentType);
+                        if (TargetToTweenMap.TryGetValue(key, out var owner) && owner == entities[i])
+                            TargetToTweenMap.Remove(key);
                     }
                 }
             }
         }
     }
-        
-    
+
+
 }

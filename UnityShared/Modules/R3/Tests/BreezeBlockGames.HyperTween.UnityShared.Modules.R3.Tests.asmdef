@@ -1,0 +1,32 @@
+{
+    "name": "BreezeBlockGames.HyperTween.UnityShared.Modules.R3.Tests",
+    "references": [
+        "BreezeBlockGames.HyperTween.UnityShared",
+        "BreezeBlockGames.HyperTween.UnityShared.Modules.R3",
+        "Unity.Entities",
+        "Unity.Collections",
+        "Unity.Mathematics",
+        "Unity.Entities.Hybrid"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS",
+        "!HYPER_TWEEN_DISABLE_MODULE_R3",
+        "R3_EXISTS"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.cysharp.r3",
+            "expression": "0",
+            "define": "R3_EXISTS"
+        }
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "R3.dll",
+        "nunit.framework.dll"
+    ]
+}

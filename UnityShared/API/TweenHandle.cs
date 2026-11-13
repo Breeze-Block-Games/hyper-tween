@@ -26,13 +26,13 @@ namespace BreezeBlockGames.HyperTween.UnityShared.API
         public WorldUnmanaged World => _worldUnmanaged;
 
         public bool IsNull => _entity.Equals(Entity.Null) || !World.IsCreated;
-        
+
         public TweenHandle<EntityCommandBufferTweenBuilder> GetBuilder()
         {
             return World.CreateTweenFactory().GetBuilder(this);
         }
-        
-        public TweenHandle<TBuilder> GetBuilder<TBuilder>(TweenFactory<TBuilder> factory) 
+
+        public TweenHandle<TBuilder> GetBuilder<TBuilder>(TweenFactory<TBuilder> factory)
             where TBuilder : unmanaged, ITweenBuilder
         {
             return factory.GetBuilder(this);
@@ -45,7 +45,7 @@ namespace BreezeBlockGames.HyperTween.UnityShared.API
                 // It's a null tween, playing it wouldn't do anything anyway!
                 return;
             }
-            
+
             GetBuilder().Play();
         }
     }
@@ -63,11 +63,11 @@ namespace BreezeBlockGames.HyperTween.UnityShared.API
             LocalTransform = 1 << 3,
             Journaling = 1 << 4
         }
-        
+
         private readonly Entity _entity;
         private readonly TweenFactory<TBuilder> _factory;
         private readonly FeatureFlags _featureFlags;
-        
+
         public Entity Entity
         {
             get
@@ -77,13 +77,13 @@ namespace BreezeBlockGames.HyperTween.UnityShared.API
                     throw new InvalidOperationException($"Attempting to access Entity for a Null Tween. " +
                                                         $"Either use {nameof(IsNull)} to check for validity first, or call {nameof(EnsureNonNull)}");
                 }
-                
+
                 return _entity;
             }
         }
 
         public TBuilder TweenBuilder => _factory.TweenBuilder;
-        
+
         public bool IsNull => _entity.Equals(Entity.Null);
 
         internal TweenHandle(Entity entity, TweenFactory<TBuilder> factory)
@@ -108,14 +108,14 @@ namespace BreezeBlockGames.HyperTween.UnityShared.API
             {
                 return this;
             }
-            
+
             // Just suppresses read-only warning
             var factory = _factory;
-                
+
             return factory.CreateTween();
         }
 
-        private TweenHandle<TBuilder> EnsureHas<TComponentData>(FeatureFlags featureFlags) 
+        private TweenHandle<TBuilder> EnsureHas<TComponentData>(FeatureFlags featureFlags)
             where TComponentData : unmanaged, IComponentData
         {
             // We already have the requested featureFlags, no need to continue
@@ -125,27 +125,27 @@ namespace BreezeBlockGames.HyperTween.UnityShared.API
             }
 
             var tweenHandle = EnsureNonNull();
-            
-            _factory.TweenBuilder.AddComponent<TComponentData>(_entity);
+
+            tweenHandle.TweenBuilder.AddComponent<TComponentData>(tweenHandle.Entity);
 
             return tweenHandle.WithFeatureFlags(featureFlags);
         }
-        
+
         public TweenHandle<TBuilder> EnsureHasTimer()
         {
             return EnsureHas<TweenTimer>(FeatureFlags.Timer);
         }
-        
+
         public TweenHandle<TBuilder> EnsureHasParameter()
         {
             return EnsureHas<TweenParameter>(FeatureFlags.Parameter);
         }
-        
+
         public TweenHandle<TBuilder> EnsureHasLocalTransform()
         {
             return EnsureHas<LocalTransform>(FeatureFlags.LocalTransform);
         }
-        
+
         internal TweenHandle<TBuilder> EnsureHasJournaling()
         {
 #if HYPER_TWEEN_ENABLE_JOURNAL
@@ -154,7 +154,7 @@ namespace BreezeBlockGames.HyperTween.UnityShared.API
             throw new InvalidOperationException("Attempting to create a Tween with journalling but HYPER_TWEEN_ENABLE_JOURNAL is not defined");
 #endif
         }
-        
+
         private bool Has(FeatureFlags featureFlags)
         {
             return (_featureFlags & featureFlags) == featureFlags;
@@ -163,7 +163,7 @@ namespace BreezeBlockGames.HyperTween.UnityShared.API
         private TweenHandle<TBuilder> WithFeatureFlags(FeatureFlags featureFlags)
         {
             return new TweenHandle<TBuilder>(
-                Entity, 
+                Entity,
                 _factory,
                 _featureFlags | featureFlags
             );

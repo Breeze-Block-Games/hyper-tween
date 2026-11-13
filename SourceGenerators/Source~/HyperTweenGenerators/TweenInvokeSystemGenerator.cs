@@ -45,7 +45,7 @@ public class TweenInvokeSystemGenerator : ISourceGenerator
             IsBuffered = true
         },
     };
-    
+
     public void Initialize(GeneratorInitializationContext context)
     {
     }
@@ -66,19 +66,19 @@ public class TweenInvokeSystemGenerator : ISourceGenerator
         {
             var compilation = context.Compilation;
             var syntaxTrees = compilation.SyntaxTrees;
-            
+
             var syntaxTreeToGeneratedSourceMap = new Dictionary<SyntaxTree, List<string>>();
 
             foreach (var syntaxTree in syntaxTrees)
             {
                 var semanticModel = compilation.GetSemanticModel(syntaxTree);
-                
+
                 var structSymbols = syntaxTree.GetRoot()
                     .DescendantNodes()
                     .OfType<StructDeclarationSyntax>()
                     .Select(syntax => semanticModel.GetDeclaredSymbol(syntax))
                     .Cast<ITypeSymbol>();
-                
+
                 var classSymbols = syntaxTree.GetRoot()
                     .DescendantNodes()
                     .OfType<ClassDeclarationSyntax>()
@@ -97,10 +97,10 @@ public class TweenInvokeSystemGenerator : ISourceGenerator
                         {
                             continue;
                         }
-                        
+
                         generated.AddRange(GenerateInvokeSystemsAndComponents(symbol, config));
                     }
-                    
+
                     if (generated.Count == 0)
                     {
                         continue;
@@ -130,9 +130,9 @@ public class TweenInvokeSystemGenerator : ISourceGenerator
                     var generatedPartial = generatedPartialSystems[i];
                     var generatedFile = sourceOutput.GetGeneratedSourceFilePath(syntaxTree, context.Compilation.Assembly.Name, nameof(TweenInvokeSystemGenerator), salting: i);
                     var outputSource = TypeCreationHelpers.FixUpLineDirectivesAndOutputSource(generatedFile.FullFilePath, generatedPartial);
-                    
+
                     context.AddSource(generatedFile.FileNameOnly, outputSource);
-                    
+
                     sourceOutput.OutputSourceToFile(
                         generatedFile.FullFilePath,
                         () => outputSource.ToString());
@@ -189,17 +189,17 @@ public class TweenInvokeSystemGenerator : ISourceGenerator
     {
         var componentNamespace = symbol.ContainingNamespace.ToFullName();
         var invokeSuffix = interfaceConfig.IsStop ? "OnStop" : "OnPlay";
-        var invokeComponentName =$"{symbol.Name}{invokeSuffix}";
+        var invokeComponentName = $"{symbol.Name}{invokeSuffix}";
         var invokeMethodParameters = GetInvokeMethodParameters(symbol);
         var systemName = GetSystemName(symbol, interfaceConfig);
         var systemGroupName = interfaceConfig.IsStop ? "OnTweenStopSystemGroup" : "OnTweenPlaySystemGroup";
         var isManaged = symbol.TypeKind == TypeKind.Class;
-        
+
         if (interfaceConfig.IsBuffered && !isManaged)
         {
             throw new InvalidOperationException("BufferedTweenInvoke only supports managed types");
         }
-        
+
         if (interfaceConfig.IsBuffered && invokeMethodParameters.Any(parameter => parameter.IsWrite))
         {
             throw new InvalidOperationException("BufferedTweenInvoke does not support component writes");
@@ -218,13 +218,13 @@ public class TweenInvokeSystemGenerator : ISourceGenerator
             .ToArray();
 
         var query = queryTypeElements.Length > 0 ?
-            $"entityQueryBuilder.WithAll<{string.Join(", ", queryTypeElements)}>();" 
+            $"entityQueryBuilder.WithAll<{string.Join(", ", queryTypeElements)}>();"
             : string.Empty;
-        
+
         var getNativeArrays = string.Join("\n", invokeMethodParameters
             .Zip(Enumerable.Range(0, invokeMethodParameters.Length), (parameter, i) => (parameter, i))
             .Select(tuple => tuple.parameter.GetNativeArray(tuple.i)));
-        
+
         var reads = string.Join("\n", invokeMethodParameters
             .Zip(Enumerable.Range(0, invokeMethodParameters.Length), (parameter, i) => (parameter, i))
             .Select(tuple => tuple.parameter.GetRead(tuple.i)));
@@ -240,8 +240,8 @@ public class TweenInvokeSystemGenerator : ISourceGenerator
             .Append($"using {symbol.ContainingNamespace};")
             .Append("using BreezeBlockGames.HyperTween.UnityShared.ECS.Update.Components;")
             .Distinct());
-        
-        var componentMembers =  string.Join("\n", symbol
+
+        var componentMembers = string.Join("\n", symbol
             .GetMemberSyntax()
             .Select(syntax => syntax.ToFullString()));
 
@@ -254,26 +254,26 @@ public class TweenInvokeSystemGenerator : ISourceGenerator
               entityQueryBuilder
               .WithAll<TweenOnPlay>();
               """;
-                
+
         var initialiseJobDatas = string.Join("\n", invokeMethodParameters
             .Zip(Enumerable.Range(0, invokeMethodParameters.Length), (parameter, i) => (parameter, i))
             .Select(tuple => tuple.parameter.GetInitialiseJobData(tuple.i)));
-        
+
         var updateJobDatas = string.Join("\n", invokeMethodParameters
             .Zip(Enumerable.Range(0, invokeMethodParameters.Length), (parameter, i) => (parameter, i))
             .Select(tuple => tuple.parameter.GetUpdateJobData(tuple.i)));
-        
+
         var invokeParams = string.Join(", ", invokeMethodParameters
             .Zip(Enumerable.Range(0, invokeMethodParameters.Length), (parameter, i) => (parameter, i))
             .Select(tuple => tuple.parameter.GetJobInvokeParam(tuple.i)));
-        
+
         var writes = string.Join("\n", invokeMethodParameters
             .Zip(Enumerable.Range(0, invokeMethodParameters.Length), (parameter, i) => (parameter, i))
             .Select(tuple => tuple.parameter.GetWrite(tuple.i)));
 
         var orderAttributes = new List<string>();
         var orderNamespaces = new List<string>();
-        
+
         foreach (var attributeData in symbol.GetAttributes())
         {
             if (attributeData.AttributeClass == null)
@@ -282,13 +282,13 @@ public class TweenInvokeSystemGenerator : ISourceGenerator
             }
 
             var attributeFullName = attributeData.AttributeClass.GetFullName();
-            if(attributeFullName != "Unity.Entities.UpdateAfterAttribute" && 
+            if (attributeFullName != "Unity.Entities.UpdateAfterAttribute" &&
                attributeFullName != "Unity.Entities.UpdateBeforeAttribute")
             {
                 continue;
             }
 
-            var constructorArgType = attributeData.ConstructorArguments.First().Type;
+            var constructorArgType = attributeData.ConstructorArguments.First().Value as ITypeSymbol;
             if (constructorArgType == null)
             {
                 continue;
@@ -316,38 +316,38 @@ public class TweenInvokeSystemGenerator : ISourceGenerator
         var getBufferSize = interfaceConfig.IsBuffered ? $"var bufferSize = _query.CalculateEntityCount();\n" : "";
         var initBufferIndex = interfaceConfig.IsBuffered ? $"var bufferIndex = 0;\n" : "";
         var incrementBufferIndex = interfaceConfig.IsBuffered ? $"bufferIndex++;\n" : "";
-        
+
         var bufferInits = interfaceConfig.IsBuffered ? string.Join("\n", invokeMethodParameters
             .Zip(Enumerable.Range(0, invokeMethodParameters.Length), (parameter, i) => (parameter, i))
             .Select(tuple => tuple.parameter.GetInitBuffer(tuple.i))
             .Append($"var invoke_Buffer = ArrayPool<{invokeComponentName}>.Shared.Rent(bufferSize);")) : "";
-        
+
         var bufferDisposes = interfaceConfig.IsBuffered ? string.Join("\n", invokeMethodParameters
             .Zip(Enumerable.Range(0, invokeMethodParameters.Length), (parameter, i) => (parameter, i))
             .Select(tuple => tuple.parameter.GetDisposeBuffer(tuple.i))
             .Append($"ArrayPool<{invokeComponentName}>.Shared.Return(invoke_Buffer);")) : "";
-        
+
         var bufferWrites = interfaceConfig.IsBuffered ? string.Join("\n", invokeMethodParameters
             .Zip(Enumerable.Range(0, invokeMethodParameters.Length), (parameter, i) => (parameter, i))
             .Select(tuple => tuple.parameter.GetWriteToBuffer(tuple.i))
             .Append($"invoke_Buffer[bufferIndex] = invokeComponent;")) : "";
-        
+
         var bufferReads = interfaceConfig.IsBuffered ? string.Join("\n", invokeMethodParameters
             .Zip(Enumerable.Range(0, invokeMethodParameters.Length), (parameter, i) => (parameter, i))
             .Select(tuple => tuple.parameter.GetReadFromBuffer(tuple.i))
             .Append($"var invokeComponent = invoke_Buffer[bufferIndex];")) : "";
 
         var nonBufferedInvoke = interfaceConfig.IsBuffered ? "" : $"invokeComponent.Invoke({invokeParams});\n";
-        
+
         var usings = string.Join("\n", invokeMethodParameters
             .Zip(Enumerable.Range(0, invokeMethodParameters.Length), (parameter, i) => (parameter, i))
             .Select(tuple => tuple.parameter.GetUsing(tuple.i).Trim())
             .Append($"using {componentNamespace};")
             .Append("using BreezeBlockGames.HyperTween.UnityShared.ECS.Update.Components;")
-            .Concat(orderNamespaces)
+            .Concat(orderNamespaces.Select(ns => $"using {ns};"))
             .Distinct());
 
-        
+
         string iterateBuffer = "";
         if (interfaceConfig.IsBuffered)
         {
@@ -363,7 +363,7 @@ public class TweenInvokeSystemGenerator : ISourceGenerator
         {
 
             var allowParallel = invokeMethodParameters.All(parameter => parameter.AllowParallel());
-            var schedule = allowParallel ? 
+            var schedule = allowParallel ?
                 "state.Dependency = job.ScheduleParallel(_query, state.Dependency);" :
                 "state.Dependency = job.Schedule(_query, state.Dependency);";
 
@@ -382,7 +382,7 @@ public class TweenInvokeSystemGenerator : ISourceGenerator
                                }
                            }
                            """;
-            
+
             yield return $$"""
                            using Unity.Entities;
                            using Unity.Burst;
@@ -516,7 +516,7 @@ public class TweenInvokeSystemGenerator : ISourceGenerator
                                }
                            }
                            """;
-        } 
+        }
         else if (symbol.TypeKind == TypeKind.Class)
         {
             yield return $$"""
@@ -533,7 +533,7 @@ public class TweenInvokeSystemGenerator : ISourceGenerator
                                }
                            }
                            """;
-            
+
             yield return $$"""
                            using System.Buffers;
                            using Unity.Entities;

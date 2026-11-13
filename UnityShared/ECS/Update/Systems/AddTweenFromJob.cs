@@ -7,74 +7,73 @@ using UnityEngine;
 
 namespace BreezeBlockGames.HyperTween.UnityShared.ECS.Update.Systems
 {
+    [BurstCompile]
+    public struct AddTweenFromJob<TTweenFrom, TTweenTo, TTargetComponent, TValue> : IJobChunk
+        where TTweenFrom : unmanaged, ITweenFrom<TValue>
+        where TTweenTo : unmanaged, ITweenTo<TTargetComponent, TValue>
+        where TTargetComponent : unmanaged, IComponentData
+    {
+        [ReadOnly]
+        public ComponentTypeHandle<TTargetComponent> TargetComponentHandle;
+
+        [ReadOnly]
+        public ComponentTypeHandle<TweenTarget> TweenTargetComponentHandle;
+
+        [ReadOnly]
+        public ComponentLookup<TTargetComponent> TargetComponents;
+
+        public EntityTypeHandle EntityTypeHandle;
+
+        public EntityCommandBuffer.ParallelWriter EntityCommandBuffer;
+
         [BurstCompile]
-        public struct AddTweenFromJob<TTweenFrom, TTweenTo, TTargetComponent, TValue> : IJobChunk
-            where TTweenFrom : unmanaged, ITweenFrom<TValue>
-            where TTweenTo : unmanaged, ITweenTo<TTargetComponent, TValue>
-            where TTargetComponent : unmanaged, IComponentData
+        public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
         {
-            [ReadOnly]
-            public ComponentTypeHandle<TTargetComponent> TargetComponentHandle;
-            
-            [ReadOnly]
-            public ComponentTypeHandle<TweenTarget> TweenTargetComponentHandle;
+            var entities = chunk.GetNativeArray(EntityTypeHandle);
 
-            [ReadOnly]
-            public ComponentLookup<TTargetComponent> TargetComponents;
-            
-            public EntityTypeHandle EntityTypeHandle;
-            
-            public EntityCommandBuffer.ParallelWriter EntityCommandBuffer;
-            
-            [BurstCompile]
-            public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
+            if (chunk.Has(ref TweenTargetComponentHandle))
             {
-                var entities = chunk.GetNativeArray(EntityTypeHandle);
+                var tweenTargets = chunk.GetNativeArray(ref TweenTargetComponentHandle);
 
-                if (chunk.Has(ref TweenTargetComponentHandle))
+                var enumerator = new ChunkEntityEnumerator(useEnabledMask, chunkEnabledMask, chunk.Count);
+                while (enumerator.NextEntityIndex(out var i))
                 {
-                    var tweenTargets = chunk.GetNativeArray(ref TweenTargetComponentHandle);
-
-                    var enumerator = new ChunkEntityEnumerator(useEnabledMask, chunkEnabledMask, chunk.Count);
-                    while(enumerator.NextEntityIndex(out var i))
+                    var tweenTarget = tweenTargets[i];
+                    if (!TargetComponents.HasComponent(tweenTarget.Target))
                     {
-                        var tweenTarget = tweenTargets[i];
-                        if (!TargetComponents.HasComponent(tweenTarget.Target))
-                        {
-                            Debug.LogError($"TweenTarget does not have required target component");
-                            continue;
-                        }
-                    
-                        var targetComponent = TargetComponents[tweenTarget.Target];
-                        var from = default(TTweenTo).Read(in targetComponent);
-
-                        var tweenFrom = default(TTweenFrom);
-                        tweenFrom.SetValue(from);
-                    
-                        EntityCommandBuffer.AddComponent(unfilteredChunkIndex, entities[i], tweenFrom);
+                        continue;
                     }
-                }
-                else if(chunk.Has(ref TargetComponentHandle))
-                {
-                    var targetComponents = chunk.GetNativeArray(ref TargetComponentHandle);
 
-                    var enumerator = new ChunkEntityEnumerator(useEnabledMask, chunkEnabledMask, chunk.Count);
-                    while(enumerator.NextEntityIndex(out var i))
-                    {
-                        var targetComponent = targetComponents[i];
-                        var from = default(TTweenTo).Read(in targetComponent);
+                    var targetComponent = TargetComponents[tweenTarget.Target];
+                    var from = default(TTweenTo).Read(in targetComponent);
 
-                        var tweenFrom = default(TTweenFrom);
-                        tweenFrom.SetValue(from);
-                    
-                        EntityCommandBuffer.AddComponent(unfilteredChunkIndex, entities[i], tweenFrom);
-                    }
-                }
-                else
-                {
-                    Debug.LogError("Expected TargetComponent");
+                    var tweenFrom = default(TTweenFrom);
+                    tweenFrom.SetValue(from);
+
+                    EntityCommandBuffer.AddComponent(unfilteredChunkIndex, entities[i], tweenFrom);
                 }
             }
+            else if (chunk.Has(ref TargetComponentHandle))
+            {
+                var targetComponents = chunk.GetNativeArray(ref TargetComponentHandle);
+
+                var enumerator = new ChunkEntityEnumerator(useEnabledMask, chunkEnabledMask, chunk.Count);
+                while (enumerator.NextEntityIndex(out var i))
+                {
+                    var targetComponent = targetComponents[i];
+                    var from = default(TTweenTo).Read(in targetComponent);
+
+                    var tweenFrom = default(TTweenFrom);
+                    tweenFrom.SetValue(from);
+
+                    EntityCommandBuffer.AddComponent(unfilteredChunkIndex, entities[i], tweenFrom);
+                }
+            }
+            else
+            {
+                Debug.LogError("Expected TargetComponent");
+            }
         }
-    
+    }
+
 }

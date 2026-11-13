@@ -32,19 +32,19 @@ public class TweenOutputSystemGenerator : ISourceGenerator
         {
             var compilation = context.Compilation;
             var syntaxTrees = compilation.SyntaxTrees;
-            
+
             var syntaxTreeToGeneratedSourceMap = new Dictionary<SyntaxTree, List<string>>();
 
             foreach (var syntaxTree in syntaxTrees)
             {
                 var semanticModel = compilation.GetSemanticModel(syntaxTree);
-                
+
                 var structSymbols = syntaxTree.GetRoot()
                     .DescendantNodes()
                     .OfType<StructDeclarationSyntax>()
                     .Select(syntax => semanticModel.GetDeclaredSymbol(syntax))
                     .Cast<ITypeSymbol>();
-                
+
                 var classSymbols = syntaxTree.GetRoot()
                     .DescendantNodes()
                     .OfType<ClassDeclarationSyntax>()
@@ -60,7 +60,12 @@ public class TweenOutputSystemGenerator : ISourceGenerator
                         continue;
                     }
 
-                    syntaxTreeToGeneratedSourceMap.Add(syntaxTree, GenerateOutputSystemsAndComponents(symbol, interfaceSymbol).ToList());
+                    if (!syntaxTreeToGeneratedSourceMap.TryGetValue(syntaxTree, out var generated))
+                    {
+                        generated = new List<string>();
+                        syntaxTreeToGeneratedSourceMap.Add(syntaxTree, generated);
+                    }
+                    generated.AddRange(GenerateOutputSystemsAndComponents(symbol, interfaceSymbol));
                 }
             }
 
@@ -76,9 +81,9 @@ public class TweenOutputSystemGenerator : ISourceGenerator
                     var generatedPartial = generatedPartialSystems[i];
                     var generatedFile = sourceOutput.GetGeneratedSourceFilePath(syntaxTree, context.Compilation.Assembly.Name, nameof(TweenOutputSystemGenerator), salting: i);
                     var outputSource = TypeCreationHelpers.FixUpLineDirectivesAndOutputSource(generatedFile.FullFilePath, generatedPartial);
-                    
+
                     context.AddSource(generatedFile.FileNameOnly, outputSource);
-                    
+
                     sourceOutput.OutputSourceToFile(
                         generatedFile.FullFilePath,
                         () => outputSource.ToString());
@@ -104,10 +109,10 @@ public class TweenOutputSystemGenerator : ISourceGenerator
         {
             throw new InvalidOperationException($"Expected {TweenToSymbolName} to have generic type arguments");
         }
-        
+
         var targetComponentTypeSymbol = typeArgumentSymbols[0];
         var valueTypeSymbol = typeArgumentSymbols[1];
-        
+
         var shortName = componentSymbol.Name;
         var longName = componentSymbol.GetFullName();
         var componentNamespace = componentSymbol.ContainingNamespace.ToFullName();
@@ -117,7 +122,7 @@ public class TweenOutputSystemGenerator : ISourceGenerator
         var valueTypeName = valueTypeSymbol.ToFullName();
 
         var burstCompileAttribute = targetComponentTypeSymbol.TypeKind == TypeKind.Struct ? "[BurstCompile]" : "";
-        
+
         yield return $$"""
                        using {{componentNamespace}};
                        using Unity.Entities;
@@ -142,60 +147,60 @@ public class TweenOutputSystemGenerator : ISourceGenerator
                            }
                        }
                        """;
-        
+
         // TweenAllowReuse removed for now, but keeping this handy for when it comes back
-//         yield return $$"""
-//                        using {{componentNamespace}};
-//                        using HyperTween.Auto.Components;
-//                        using Unity.Entities;
-//                        using Unity.Burst;
-//                        using HyperTween.ECS.Structural.Systems;
-//                        using Unity.Collections;
-//                        using HyperTween.ECS.Structural.Components;
-//                        
-//                        namespace HyperTween.Auto.Systems
-//                        {
-//                            [global::System.Runtime.CompilerServices.CompilerGenerated]
-//                            [UpdateInGroup(typeof(OnTweenStopSystemGroup))]
-//                            {{burstCompileAttribute}}
-//                            public partial struct {{shortName}}_RemoveTweenFromComponentSystem : ISystem
-//                            {
-//                                private EntityQuery _query;
-//                                private EntityQuery _singletonQuery;
-//                            
-//                                public void OnCreate(ref SystemState state)
-//                                {
-//                                    var genericComponentTypes = new NativeList<ComponentType>(4, Allocator.Temp)
-//                                    {
-//                                        ComponentType.ReadOnly(typeof({{fromComponentName}}))
-//                                    };
-//                            
-//                                    _query = state.GetEntityQuery(new EntityQueryBuilder(Allocator.Temp)
-//                                        .WithAll(ref genericComponentTypes)
-//                                        .WithAll<TweenPlaying, TweenAllowReuse>()
-//                                        .WithNone<TweenRequestPlaying>());
-//                                        
-//                                     _singletonQuery = state.GetEntityQuery(new EntityQueryBuilder(Allocator.Temp)
-//                                        .WithAll<CleanTweenStructuralChangeECBSystem.Singleton>()
-//                                        .WithOptions(EntityQueryOptions.IncludeSystems));
-//                            
-//                                    genericComponentTypes.Dispose();
-//                                    
-//                                    state.RequireForUpdate(_query);
-//                                    state.RequireForUpdate(_singletonQuery);
-//                                }
-//                            
-//                                {{burstCompileAttribute}}
-//                                public void OnUpdate(ref SystemState state)
-//                                {
-//                                    var ecbSingleton = _singletonQuery.GetSingleton<CleanTweenStructuralChangeECBSystem.Singleton>();
-//                                    var ecb = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
-//                            
-//                                    ecb.RemoveComponent<{{fromComponentName}}>(_query, EntityQueryCaptureMode.AtPlayback);
-//                                }
-//                            }
-//                        }
-//                        """;
+        //         yield return $$"""
+        //                        using {{componentNamespace}};
+        //                        using HyperTween.Auto.Components;
+        //                        using Unity.Entities;
+        //                        using Unity.Burst;
+        //                        using HyperTween.ECS.Structural.Systems;
+        //                        using Unity.Collections;
+        //                        using HyperTween.ECS.Structural.Components;
+        //
+        //                        namespace HyperTween.Auto.Systems
+        //                        {
+        //                            [global::System.Runtime.CompilerServices.CompilerGenerated]
+        //                            [UpdateInGroup(typeof(OnTweenStopSystemGroup))]
+        //                            {{burstCompileAttribute}}
+        //                            public partial struct {{shortName}}_RemoveTweenFromComponentSystem : ISystem
+        //                            {
+        //                                private EntityQuery _query;
+        //                                private EntityQuery _singletonQuery;
+        //
+        //                                public void OnCreate(ref SystemState state)
+        //                                {
+        //                                    var genericComponentTypes = new NativeList<ComponentType>(4, Allocator.Temp)
+        //                                    {
+        //                                        ComponentType.ReadOnly(typeof({{fromComponentName}}))
+        //                                    };
+        //
+        //                                    _query = state.GetEntityQuery(new EntityQueryBuilder(Allocator.Temp)
+        //                                        .WithAll(ref genericComponentTypes)
+        //                                        .WithAll<TweenPlaying, TweenAllowReuse>()
+        //                                        .WithNone<TweenRequestPlaying>());
+        //
+        //                                     _singletonQuery = state.GetEntityQuery(new EntityQueryBuilder(Allocator.Temp)
+        //                                        .WithAll<AddTweenFromECBSystem.Singleton>()
+        //                                        .WithOptions(EntityQueryOptions.IncludeSystems));
+        //
+        //                                    genericComponentTypes.Dispose();
+        //
+        //                                    state.RequireForUpdate(_query);
+        //                                    state.RequireForUpdate(_singletonQuery);
+        //                                }
+        //
+        //                                {{burstCompileAttribute}}
+        //                                public void OnUpdate(ref SystemState state)
+        //                                {
+        //                                    var ecbSingleton = _singletonQuery.GetSingleton<AddTweenFromECBSystem.Singleton>();
+        //                                    var ecb = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
+        //
+        //                                    ecb.RemoveComponent<{{fromComponentName}}>(_query, EntityQueryCaptureMode.AtPlayback);
+        //                                }
+        //                            }
+        //                        }
+        //                        """;
 
         if (targetComponentTypeSymbol.TypeKind == TypeKind.Struct)
         {
@@ -367,7 +372,7 @@ public class TweenOutputSystemGenerator : ISourceGenerator
                                        _targetComponentHandle = state.EntityManager.GetComponentTypeHandle<{{targetComponentName}}>(false);
 
                                        _singletonQuery = state.GetEntityQuery(new EntityQueryBuilder(Allocator.Temp)
-                                           .WithAll<CleanTweenStructuralChangeECBSystem.Singleton>()
+                                           .WithAll<AddTweenFromECBSystem.Singleton>()
                                            .WithOptions(EntityQueryOptions.IncludeSystems));
                                        
                                        _query = state.GetEntityQuery(new EntityQueryBuilder(Allocator.Temp)
@@ -384,7 +389,7 @@ public class TweenOutputSystemGenerator : ISourceGenerator
                                        _entityTypeHandle.Update(ref state);
                                        _targetComponentHandle.Update(ref state);
 
-                                       var ecbSystem = _singletonQuery.GetSingleton<CleanTweenStructuralChangeECBSystem.Singleton>();
+                                       var ecbSystem = _singletonQuery.GetSingleton<AddTweenFromECBSystem.Singleton>();
                                        var ecb = ecbSystem.CreateCommandBuffer(state.WorldUnmanaged);
                                        
                                        using var chunks = _query.ToArchetypeChunkArray(Allocator.Temp);
@@ -397,6 +402,7 @@ public class TweenOutputSystemGenerator : ISourceGenerator
                                            while(enumerator.NextEntityIndex(out var i))
                                            {
                                                var targetComponent = targetComponents[i];
+                                               if (targetComponent == null) continue;
                                                var from = default({{shortName}}).Read(in targetComponent);
                                                
                                                var tweenFrom = default({{fromComponentName}});
@@ -472,6 +478,7 @@ public class TweenOutputSystemGenerator : ISourceGenerator
                                                var interpolated = toComponent.Lerp(from, to, (float)tweenParameters[i].Value);
                                            
                                                var targetComponent = targetComponents[i];
+                                               if (targetComponent == null) continue;
                                                toComponent.Write(ref targetComponent, interpolated);
                                            }
                                        }
