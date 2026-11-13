@@ -16,6 +16,33 @@ Complete a collection group before its command buffer plays back. A command-buff
 
 `ToTransformInstanceIds` returns owned native storage. `CollectionHelper.Dispose(array)` handles both built-in and custom allocator handles.
 
+## Batch construction and ownership
+
+`tween.CreateBatch(count, allocator)` accepts a nonnegative count, including zero.
+It allocates the entity list before calling the builder, clones the source, then
+installs the batch parameter component before consuming the source entity on
+success. Invalid counts or allocation failures leave the source unchanged.
+Construction does not add a Prefab component to the source.
+If managed construction throws, cleanup attempts to release clones
+already written into the list and always disposes the unreturned native list,
+including when entity cleanup throws. Burst exceptions abort their job/function
+and do not provide managed exception unwinding; this cleanup guarantee does not
+cover Burst faults. Builders that fail after consuming the
+source cannot restore its original entity identity.
+
+Dispose an owned batch handle when finished with its native list; disposal does
+not destroy the resulting tween entities. A batch created from a caller-supplied
+`NativeArray<Entity>` borrows that list and does not dispose it.
+
+Regression tests observe native-list disposal using Unity's safety checks in the
+Editor. Players without `ENABLE_UNITY_COLLECTIONS_CHECKS` cannot safely inspect a
+stale NativeArray copy; player cases verify errors, source preservation and clone
+rollback without reading or freeing that copy again.
+
+Command-buffer builders record these operations for later playback. Playback
+errors cannot be rolled back by the constructor; discard a command buffer whose
+recording fails rather than treating it as a transaction that can be reused.
+
 ## Batch ranges
 
 Batch range APIs use separate `sourceIndex`, `destinationIndex` and `count` values. Source and destination indices are zero based. A count of zero writes nothing and permits an index equal to the corresponding array length. A count of -1 consumes the remaining source range. Other negative values, or ranges extending beyond either array, fail before mutation.

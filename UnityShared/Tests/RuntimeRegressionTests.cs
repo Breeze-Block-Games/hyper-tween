@@ -43,6 +43,253 @@ namespace BreezeBlockGames.HyperTween.UnityShared.Tests
         }
         private void Drain() { for (var i = 0; i < 8; i++) Tick(0); }
 
+        [TestCase(false)] [TestCase(true)]
+        public void BatchConstruction_NegativeCountLeavesSourceUnchanged(bool wasPrefab)
+        {
+            var source = _factory.CreateTween().WithDuration(3);
+            if (wasPrefab) _world.EntityManager.AddComponent<Prefab>(source.Entity);
+            Assert.Throws<System.ArgumentOutOfRangeException>(() => source.CreateBatch(-1, Allocator.TempJob));
+            Assert.That(_world.EntityManager.Exists(source.Entity), Is.True);
+            Assert.That(_world.EntityManager.HasComponent<Prefab>(source.Entity), Is.EqualTo(wasPrefab));
+            Assert.That(_world.EntityManager.GetComponentData<TweenDuration>(source.Entity).Value, Is.EqualTo(3));
+        }
+
+        [Test] public void BatchConstruction_InvalidAllocatorLeavesSourceUnchanged()
+        {
+            var source = _factory.CreateTween().WithDuration(3);
+            Assert.Catch(() => source.CreateBatch(2, Allocator.None));
+            Assert.That(_world.EntityManager.Exists(source.Entity), Is.True);
+            Assert.That(_world.EntityManager.HasComponent<Prefab>(source.Entity), Is.False);
+            Assert.That(_world.EntityManager.GetComponentData<TweenDuration>(source.Entity).Value, Is.EqualTo(3));
+        }
+
+        [Test] public void BatchConstruction_NegativeCountRecordsNoPrefabMutation()
+        {
+            var source = _factory.CreateTween().WithDuration(3);
+            using var commands = new EntityCommandBuffer(Allocator.TempJob);
+            var builder = new EntityCommandBufferTweenBuilder(_world.Unmanaged, commands);
+            Assert.Throws<System.ArgumentOutOfRangeException>(() =>
+                new BatchTweenHandle<EntityCommandBufferTweenBuilder>(source.Entity, -1, Allocator.TempJob, builder));
+            commands.Playback(_world.EntityManager);
+            Assert.That(_world.EntityManager.Exists(source.Entity), Is.True);
+            Assert.That(_world.EntityManager.HasComponent<Prefab>(source.Entity), Is.False);
+        }
+
+        public enum BatchFailurePoint { BeforeInstantiation, AfterFirstClone, BeforeSourceDestruction }
+
+        // Only the failing backend boundary is injected. Allocation, component
+        // changes, instantiation and rollback still use the actual EntityManager.
+        private sealed class FailingBatchBuilder : ITweenBuilder
+        {
+            private readonly EntityManagerTweenBuilder _inner;
+            private readonly Entity _source;
+            private readonly BatchFailurePoint _point;
+            public readonly System.InvalidOperationException Failure = new("Injected batch construction failure");
+            public NativeArray<Entity> Storage;
+            public Entity[] Clones = System.Array.Empty<Entity>();
+            public FailingBatchBuilder(EntityManagerTweenBuilder inner, Entity source, BatchFailurePoint point)
+            {
+                _inner = inner; _source = source; _point = point;
+            }
+            public WorldUnmanaged WorldUnmanaged => _inner.WorldUnmanaged;
+            public Entity CreateEntity() => _inner.CreateEntity();
+            public void DestroyEntity(Entity entity)
+            {
+                if (entity == _source && _point == BatchFailurePoint.BeforeSourceDestruction) throw Failure;
+                _inner.DestroyEntity(entity);
+            }
+            public void Instantiate(Entity source, NativeArray<Entity> entities)
+            {
+                Storage = entities;
+                if (_point == BatchFailurePoint.BeforeInstantiation) throw Failure;
+                if (_point == BatchFailurePoint.AfterFirstClone)
+                {
+                    _inner.Instantiate(source, entities.GetSubArray(0, 1));
+                    Clones = entities.ToArray();
+                    throw Failure;
+                }
+                _inner.Instantiate(source, entities);
+                Clones = entities.ToArray();
+            }
+            public void SetName(Entity entity, in FixedString64Bytes name) => _inner.SetName(entity, name);
+            public void AddComponent<T>(Entity entity) where T : unmanaged, IComponentData => _inner.AddComponent<T>(entity);
+            public void AddComponent<T>(NativeArray<Entity> entities) where T : unmanaged, IComponentData => _inner.AddComponent<T>(entities);
+            public void AddComponent<T>(Entity entity, T data) where T : unmanaged, IComponentData => _inner.AddComponent(entity, data);
+            public void AddComponent<T>(NativeArray<Entity> entities, T data) where T : unmanaged, IComponentData => _inner.AddComponent(entities, data);
+            public void AddComponentObject<T>(Entity entity, T data) where T : class => _inner.AddComponentObject(entity, data);
+            public DynamicBuffer<T> AddBuffer<T>(Entity entity) where T : unmanaged, IBufferElementData => _inner.AddBuffer<T>(entity);
+        }
+
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
+        // A copied NativeArray retains its pointer after another copy disposes it.
+        // Only safety-enabled runtimes can inspect that stale copy safely. Players
+        // without these checks must never read or free it after construction.
+        private static bool BatchStorageWasReleased(NativeArray<Entity> storage)
+        {
+            try { _ = storage[0]; return false; }
+            catch (System.ObjectDisposedException) { return true; }
+        }
+
+#endif
+
+        [TestCase(BatchFailurePoint.BeforeInstantiation)]
+        [TestCase(BatchFailurePoint.AfterFirstClone)]
+        [TestCase(BatchFailurePoint.BeforeSourceDestruction)]
+        public void BatchConstruction_BackendFailureReleasesStorageAndClones(BatchFailurePoint point)
+        {
+            var source = _factory.CreateTween().WithDuration(3);
+            var builder = new FailingBatchBuilder(_factory.TweenBuilder, source.Entity, point);
+            try
+            {
+                var error = Assert.Throws<System.InvalidOperationException>(() =>
+                    new BatchTweenHandle<FailingBatchBuilder>(source.Entity, 2, Allocator.TempJob, builder));
+                Assert.That(error, Is.SameAs(builder.Failure));
+                Assert.That(builder.Storage.IsCreated, Is.True, "The failure must happen after real native allocation.");
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
+                Assert.That(BatchStorageWasReleased(builder.Storage), Is.True, "The unreturned handle must not strand its NativeArray.");
+#endif
+                Assert.That(_world.EntityManager.Exists(source.Entity), Is.True);
+                Assert.That(_world.EntityManager.HasComponent<Prefab>(source.Entity), Is.False);
+                Assert.That(_world.EntityManager.GetComponentData<TweenDuration>(source.Entity).Value, Is.EqualTo(3));
+                foreach (var clone in builder.Clones)
+                    if (clone != Entity.Null) Assert.That(_world.EntityManager.Exists(clone), Is.False, "Failed construction must release created clones.");
+            }
+            finally
+            {
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
+                // Keep the Editor RED run from leaking the exposed storage.
+                if (builder.Storage.IsCreated && !BatchStorageWasReleased(builder.Storage)) builder.Storage.Dispose();
+#endif
+            }
+        }
+
+        private struct ParameterFailureState
+        {
+            public NativeArray<Entity> Storage;
+            public Entity FirstClone;
+            public Entity SecondClone;
+            public bool AddFirstParameter;
+        }
+
+        // A pointer to the synchronous test's stack state keeps this backend
+        // unmanaged, as required by the public TweenHandle.CreateBatch API.
+        private unsafe struct ParameterFailureBuilder : ITweenBuilder
+        {
+            private readonly EntityManagerTweenBuilder _inner;
+            private readonly ParameterFailureState* _state;
+            public ParameterFailureBuilder(EntityManagerTweenBuilder inner, ParameterFailureState* state)
+            {
+                _inner = inner; _state = state;
+            }
+            public WorldUnmanaged WorldUnmanaged => _inner.WorldUnmanaged;
+            public Entity CreateEntity() => _inner.CreateEntity();
+            public void DestroyEntity(Entity entity) => _inner.DestroyEntity(entity);
+            public void Instantiate(Entity source, NativeArray<Entity> entities)
+            {
+                _inner.Instantiate(source, entities);
+                _state->Storage = entities;
+                _state->FirstClone = entities[0];
+                _state->SecondClone = entities[1];
+            }
+            public void SetName(Entity entity, in FixedString64Bytes name) => _inner.SetName(entity, name);
+            public void AddComponent<T>(Entity entity) where T : unmanaged, IComponentData => _inner.AddComponent<T>(entity);
+            public void AddComponent<T>(NativeArray<Entity> entities) where T : unmanaged, IComponentData
+            {
+                if (typeof(T) == typeof(TweenParameter))
+                {
+                    if (_state->AddFirstParameter) _inner.AddComponent<T>(entities[0]);
+                    throw new System.InvalidOperationException("Injected batch parameter failure");
+                }
+                _inner.AddComponent<T>(entities);
+            }
+            public void AddComponent<T>(Entity entity, T data) where T : unmanaged, IComponentData => _inner.AddComponent(entity, data);
+            public void AddComponent<T>(NativeArray<Entity> entities, T data) where T : unmanaged, IComponentData => _inner.AddComponent(entities, data);
+            public void AddComponentObject<T>(Entity entity, T data) where T : class => _inner.AddComponentObject(entity, data);
+            public DynamicBuffer<T> AddBuffer<T>(Entity entity) where T : unmanaged, IBufferElementData => _inner.AddBuffer<T>(entity);
+        }
+
+        [TestCase(false)] [TestCase(true)]
+        public unsafe void BatchConstruction_ParameterSetupFailurePreservesSourceAndReleasesClones(bool addFirstParameter)
+        {
+            var state = new ParameterFailureState { AddFirstParameter = addFirstParameter };
+            var factory = new TweenFactory<ParameterFailureBuilder>(new ParameterFailureBuilder(_factory.TweenBuilder, &state));
+            var source = factory.CreateTween().WithDuration(3);
+            try
+            {
+                Assert.Throws<System.InvalidOperationException>(() => source.CreateBatch(2, Allocator.TempJob));
+                Assert.That(state.Storage.IsCreated, Is.True, "The failure must follow actual clone allocation.");
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
+                Assert.That(BatchStorageWasReleased(state.Storage), Is.True);
+#endif
+                Assert.That(_world.EntityManager.Exists(source.Entity), Is.True, "Parameter installation is part of creation, before consuming its source.");
+                Assert.That(_world.EntityManager.HasComponent<Prefab>(source.Entity), Is.False);
+                Assert.That(_world.EntityManager.GetComponentData<TweenDuration>(source.Entity).Value, Is.EqualTo(3));
+                Assert.That(_world.EntityManager.Exists(state.FirstClone), Is.False);
+                Assert.That(_world.EntityManager.Exists(state.SecondClone), Is.False);
+            }
+            finally
+            {
+#if UNITY_EDITOR && ENABLE_UNITY_COLLECTIONS_CHECKS
+                if (state.Storage.IsCreated && !BatchStorageWasReleased(state.Storage)) state.Storage.Dispose();
+#endif
+            }
+        }
+
+        [TestCase(0)] [TestCase(2)]
+        public void BatchConstruction_OwnedSuccessConsumesSourceAndKeepsClonesAfterDispose(int count)
+        {
+            var source = _factory.CreateTween().WithDuration(3);
+            var batch = source.CreateBatch(count, Allocator.TempJob);
+            var disposed = false;
+            try
+            {
+                Assert.That(batch.BatchTweenBuilder.Count, Is.EqualTo(count));
+                Assert.That(_world.EntityManager.Exists(source.Entity), Is.False);
+                using var query = _world.EntityManager.CreateEntityQuery(typeof(TweenDuration));
+                Assert.That(query.CalculateEntityCount(), Is.EqualTo(count));
+                using var clones = query.ToEntityArray(Allocator.Temp);
+                batch.Dispose();
+                disposed = true;
+                foreach (var clone in clones)
+                {
+                    Assert.That(_world.EntityManager.Exists(clone), Is.True, "Handle disposal owns the list, not the tween entities.");
+                    Assert.That(_world.EntityManager.HasComponent<Prefab>(clone), Is.False);
+                    Assert.That(_world.EntityManager.GetComponentData<TweenDuration>(clone).Value, Is.EqualTo(3));
+                }
+            }
+            finally
+            {
+                if (!disposed) batch.Dispose();
+            }
+        }
+
+        [Test] public void BatchConstruction_BorrowedDisposeRetainsCallerStorage()
+        {
+            using var entities = new NativeArray<Entity>(2, Allocator.TempJob);
+            _world.EntityManager.CreateEntity(_world.EntityManager.CreateArchetype(), entities);
+            var first = entities[0];
+            var batch = _factory.CreateBatch(entities);
+            batch.Dispose();
+            Assert.That(entities[0], Is.EqualTo(first));
+            foreach (var entity in entities) Assert.That(_world.EntityManager.Exists(entity), Is.True);
+        }
+
+        [Test] public void BatchConstruction_CommandBufferSuccessMaterializesClones()
+        {
+            using var commands = new EntityCommandBuffer(Allocator.TempJob);
+            var factory = new TweenFactory<EntityCommandBufferTweenBuilder>(new EntityCommandBufferTweenBuilder(_world.Unmanaged, commands));
+            using var batch = factory.CreateTween().WithDuration(3).CreateBatch(2, Allocator.TempJob);
+            batch.WithDuration(.1f).Play();
+            commands.Playback(_world.EntityManager);
+            using var query = _world.EntityManager.CreateEntityQuery(typeof(TweenDuration));
+            Assert.That(query.CalculateEntityCount(), Is.EqualTo(2));
+            using var clones = query.ToEntityArray(Allocator.Temp);
+            foreach (var clone in clones) Assert.That(_world.EntityManager.HasComponent<Prefab>(clone), Is.False);
+            Tick(.05f); Drain();
+            foreach (var clone in clones)
+                Assert.That(_world.EntityManager.GetComponentData<TweenTimer>(clone).Value, Is.EqualTo(.05f).Within(.0001));
+        }
+
         [Test] public void TweenCollection_DiscardNestedGroup_ReleasesItsTweensAndPreservesOuterGroup()
         {
             using var collection = TweenCollection.Create();

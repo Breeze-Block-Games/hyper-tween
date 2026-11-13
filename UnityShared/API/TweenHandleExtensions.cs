@@ -201,12 +201,7 @@ namespace BreezeBlockGames.HyperTween.UnityShared.API
         public static BatchTweenHandle<TBuilder> CreateBatch<TBuilder>(this TweenHandle<TBuilder> tweenHandle, int numTweens, Allocator allocator) 
             where TBuilder : unmanaged, ITweenBuilder
         {
-            var batchTweenHandle = new BatchTweenHandle<TBuilder>(tweenHandle.Entity, numTweens, allocator, tweenHandle.TweenBuilder);
-            
-            // TODO: Flags for batches
-            batchTweenHandle.BatchTweenBuilder.AddComponent<TweenParameter>();
-
-            return batchTweenHandle;
+            return new BatchTweenHandle<TBuilder>(tweenHandle.Entity, numTweens, allocator, tweenHandle.TweenBuilder, initializeParameter: true);
         }
     }
 }

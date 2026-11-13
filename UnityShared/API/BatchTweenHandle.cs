@@ -18,18 +18,43 @@ namespace BreezeBlockGames.HyperTween.UnityShared.API
         private readonly bool _disposeEntities;
 
         public BatchTweenHandle(Entity prefab, int count, Allocator allocator, T tweenBuilder)
+            : this(prefab, count, allocator, tweenBuilder, false)
         {
-            tweenBuilder.AddComponent<Prefab>(prefab);
+        }
 
-            _entities = new NativeArray<Entity>(count, allocator);
+        internal BatchTweenHandle(Entity prefab, int count, Allocator allocator, T tweenBuilder, bool initializeParameter)
+        {
+            if (count < 0)
+                throw new ArgumentOutOfRangeException(nameof(count));
 
-            tweenBuilder.Instantiate(prefab, _entities);
+            var entities = new NativeArray<Entity>(count, allocator);
+            var constructed = false;
+            try
+            {
+                // Instantiation accepts ordinary entities. Marking the source as
+                // Prefab would mutate it before construction can succeed.
+                tweenBuilder.Instantiate(prefab, entities);
+                if (initializeParameter)
+                    new BatchTweenBuilder<T>(entities, tweenBuilder).AddComponent<TweenParameter>();
+                tweenBuilder.DestroyEntity(prefab);
+                constructed = true;
+            }
+            finally
+            {
+                if (!constructed)
+                {
+                    try
+                    {
+                        foreach (var entity in entities)
+                            if (entity != Entity.Null)
+                                tweenBuilder.DestroyEntity(entity);
+                    }
+                    finally { entities.Dispose(); }
+                }
+            }
 
-            // No longer need the prefab
-            tweenBuilder.DestroyEntity(prefab);
-
+            _entities = entities;
             _batchTweenBuilder = new BatchTweenBuilder<T>(_entities, tweenBuilder);
-
             _disposeEntities = true;
         }
 
