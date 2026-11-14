@@ -64,6 +64,7 @@ namespace BreezeBlockGames.HyperTween.UnityShared.Tests
     public class TweenTests
     {
         private World? _world;
+        private World? _previousWorld;
         private TweenFactory<EntityManagerTweenBuilder> _tweenFactory;
 
         // Batch mode has no end-of-frame coroutine callback, so resume on the next frame instead.
@@ -73,8 +74,17 @@ namespace BreezeBlockGames.HyperTween.UnityShared.Tests
         [SetUp]
         public void SetUp()
         {
-            _world = DefaultWorldInitialization.Initialize("TweenTests");
-            _tweenFactory = _world.EntityManager.CreateTweenFactory();
+            _previousWorld = World.DefaultGameObjectInjectionWorld;
+            try
+            {
+                _world = DefaultWorldInitialization.Initialize("TweenTests");
+                _tweenFactory = _world.EntityManager.CreateTweenFactory();
+            }
+            catch
+            {
+                TearDown();
+                throw;
+            }
         }
 
         [Test]
@@ -360,7 +370,19 @@ namespace BreezeBlockGames.HyperTween.UnityShared.Tests
         [TearDown]
         public void TearDown()
         {
-            _world.Dispose();
+            try
+            {
+                if (_world != null && _world.IsCreated && !ReferenceEquals(_world, _previousWorld))
+                {
+                    try { ScriptBehaviourUpdateOrder.RemoveWorldFromCurrentPlayerLoop(_world); }
+                    finally { _world.Dispose(); }
+                }
+            }
+            finally
+            {
+                World.DefaultGameObjectInjectionWorld = _previousWorld != null && _previousWorld.IsCreated ? _previousWorld : null;
+                _world = null;
+            }
         }
     }
 }
