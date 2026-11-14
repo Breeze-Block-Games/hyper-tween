@@ -4,6 +4,7 @@ using BreezeBlockGames.HyperTween.UnityShared.Modules.LocalTransforms.API;
 using BreezeBlockGames.HyperTween.UnityShared.Modules.LocalTransforms.Components;
 using BreezeBlockGames.HyperTween.UnityShared.Modules.Transforms.API;
 using BreezeBlockGames.HyperTween.UnityShared.TweenBuilders;
+using NUnit.Framework;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
@@ -17,6 +18,9 @@ namespace BreezeBlockGames.HyperTween.UnityShared.Benchmarks
     [BurstCompile]
     public class HyperTweenPerformanceTests : BasePerformanceTests
     {
+        private World? _world;
+        private World? _previousWorld;
+
         [BurstCompile]
         private struct CreateDirectTweensJob : IJobParallelForBatch
         {
@@ -104,15 +108,43 @@ namespace BreezeBlockGames.HyperTween.UnityShared.Benchmarks
         
         protected override World CreateWorld()
         {
-            var world = DefaultWorldInitialization.Initialize("PerformanceTests");
-            
-            // Disable these systems, we don't need them, and they're skewing the Create tests
-            world.Unmanaged.GetExistingSystemState<CompanionGameObjectUpdateTransformSystem>().Enabled = false;
-            
-            // One update to get systems to initialize and avoid noise in the actual tests
-            world.Update();
-            
-            return world;
+            _previousWorld = World.DefaultGameObjectInjectionWorld;
+            try
+            {
+                _world = DefaultWorldInitialization.Initialize("PerformanceTests");
+
+                // Disable these systems, we don't need them, and they're skewing the Create tests
+                _world.Unmanaged.GetExistingSystemState<CompanionGameObjectUpdateTransformSystem>().Enabled = false;
+
+                // One update to get systems to initialize and avoid noise in the actual tests
+                _world.Update();
+
+                return _world;
+            }
+            catch
+            {
+                DisposeWorld(_world);
+                throw;
+            }
+        }
+
+        [TearDown] public void TearDown() => DisposeWorld(_world);
+
+        protected override void DisposeWorld(World? world)
+        {
+            try
+            {
+                if (world != null && world.IsCreated && !ReferenceEquals(world, _previousWorld))
+                {
+                    try { ScriptBehaviourUpdateOrder.RemoveWorldFromCurrentPlayerLoop(world); }
+                    finally { world.Dispose(); }
+                }
+            }
+            finally
+            {
+                World.DefaultGameObjectInjectionWorld = _previousWorld != null && _previousWorld.IsCreated ? _previousWorld : null;
+                _world = null;
+            }
         }
 
         protected override void CreateTransformTweens(World world, Transform[] transforms, NativeArray<float3> positions, float duration)

@@ -13,10 +13,41 @@ namespace BreezeBlockGames.HyperTween.UnityShared.Modules.Timeline.Tests
     public class ModuleTests
     {
         private World _world = null!;
+        private World _previousWorld = null!;
         private TweenFactory<EntityManagerTweenBuilder> _factory;
         private double _elapsed;
-        [SetUp] public void SetUp() { _world = DefaultWorldInitialization.Initialize("ModuleTweenTests"); _world.GetExistingSystemManaged<UpdateWorldTimeSystem>().Enabled = false; _factory = _world.EntityManager.CreateTweenFactory(); _elapsed = 0; }
-        [TearDown] public void TearDown() { _world.Dispose(); }
+        [SetUp] public void SetUp()
+        {
+            _previousWorld = World.DefaultGameObjectInjectionWorld;
+            try
+            {
+                _world = DefaultWorldInitialization.Initialize("ModuleTweenTests");
+                _world.GetExistingSystemManaged<UpdateWorldTimeSystem>().Enabled = false;
+                _factory = _world.EntityManager.CreateTweenFactory();
+                _elapsed = 0;
+            }
+            catch
+            {
+                TearDown();
+                throw;
+            }
+        }
+        [TearDown] public void TearDown()
+        {
+            try
+            {
+                if (_world != null && _world.IsCreated && !ReferenceEquals(_world, _previousWorld))
+                {
+                    try { ScriptBehaviourUpdateOrder.RemoveWorldFromCurrentPlayerLoop(_world); }
+                    finally { _world.Dispose(); }
+                }
+            }
+            finally
+            {
+                World.DefaultGameObjectInjectionWorld = _previousWorld != null && _previousWorld.IsCreated ? _previousWorld : null;
+                _world = null!;
+            }
+        }
         private void Tick(float delta) { _elapsed += delta; _world.SetTime(new TimeData(_elapsed, delta)); _world.Update(); _world.EntityManager.CompleteAllTrackedJobs(); }
         private void Drain() { for (var i=0;i<8;i++) Tick(0); }
         public class TestBehaviour : PlayableBehaviour {}

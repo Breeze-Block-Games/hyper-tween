@@ -43,9 +43,12 @@ namespace BreezeBlockGames.HyperTween.UnityShared.Benchmarks
                 })
                 .CleanUp(() =>
                 {
-                    Dispose();
-                    world?.Dispose();
-                    DestroyTransforms(transforms);
+                    try { Dispose(); }
+                    finally
+                    {
+                        DisposeWorld(world);
+                        DestroyTransforms(transforms);
+                    }
                 })
                 .WarmupCount(5)
                 .IterationsPerMeasurement(1)
@@ -56,7 +59,8 @@ namespace BreezeBlockGames.HyperTween.UnityShared.Benchmarks
         [UnityTest, Performance]
         public IEnumerator ManagedTransform_Update([Values(1, 10, 100, 1000, 10000)]int numTweens)
         {
-            using var world = CreateWorld();
+            var world = CreateWorld();
+            using var worldLifetime = new WorldLifetime(world, DisposeWorld);
 
             Transform[] transforms;
             {
@@ -108,8 +112,8 @@ namespace BreezeBlockGames.HyperTween.UnityShared.Benchmarks
                 })
                 .CleanUp(() =>
                 {
-                    world?.Dispose();
-                    Dispose();
+                    try { Dispose(); }
+                    finally { DisposeWorld(world); }
                 })
                 .WarmupCount(5)
                 .IterationsPerMeasurement(1)
@@ -120,7 +124,8 @@ namespace BreezeBlockGames.HyperTween.UnityShared.Benchmarks
         [UnityTest, Performance]
         public IEnumerator DirectUnmanagedTransform_Update([Values(1, 10, 100, 1000, 10000, 100000)]int numTweens)
         {
-            using var world = CreateWorld();
+            var world = CreateWorld();
+            using var worldLifetime = new WorldLifetime(world, DisposeWorld);
 
             {
                 using var entities = new NativeArray<Entity>(numTweens, Allocator.TempJob);
@@ -170,8 +175,8 @@ namespace BreezeBlockGames.HyperTween.UnityShared.Benchmarks
                 })
                 .CleanUp(() =>
                 {
-                    world?.Dispose();
-                    Dispose();
+                    try { Dispose(); }
+                    finally { DisposeWorld(world); }
                 })
                 .WarmupCount(5)
                 .IterationsPerMeasurement(1)
@@ -182,7 +187,8 @@ namespace BreezeBlockGames.HyperTween.UnityShared.Benchmarks
         [UnityTest, Performance]
         public IEnumerator IndirectUnmanagedTransform_Update([Values(1, 10, 100, 1000, 10000, 100000)]int numTweens)
         {
-            using var world = CreateWorld();
+            var world = CreateWorld();
+            using var worldLifetime = new WorldLifetime(world, DisposeWorld);
             
             {
                 using var entities = new NativeArray<Entity>(numTweens, Allocator.TempJob);
@@ -246,6 +252,23 @@ namespace BreezeBlockGames.HyperTween.UnityShared.Benchmarks
 
                 outEntities[i] = entity;
             }
+        }
+
+        private sealed class WorldLifetime : IDisposable
+        {
+            private readonly World? _world;
+            private readonly Action<World?> _dispose;
+            public WorldLifetime(World? world, Action<World?> dispose)
+            {
+                _world = world;
+                _dispose = dispose;
+            }
+            public void Dispose() => _dispose(_world);
+        }
+
+        protected virtual void DisposeWorld(World? world)
+        {
+            if (world != null && world.IsCreated) world.Dispose();
         }
 
         protected abstract World CreateWorld();
