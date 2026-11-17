@@ -1,7 +1,7 @@
 using BreezeBlockGames.DependencyInjection.UnityShared;
 using VContainer;
 
-namespace BreezeBlockGames.PackageBase.UnityServer.Installers
+namespace BreezeBlockGames.HyperTween.UnityServer.Installers
 {
     public class BootstrapInstaller : PackageInstaller
     {

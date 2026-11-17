@@ -1,7 +1,7 @@
 ### YamlMime:ManagedReference
 apiRules:
 - include: # The namespaces to generate
-    uidRegex: ^PackageBase\..*
+    uidRegex: ^HyperTween\..*
     type: Namespace
 - exclude:
     hasAttribute:
