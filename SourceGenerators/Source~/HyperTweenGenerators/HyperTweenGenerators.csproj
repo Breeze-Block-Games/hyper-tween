@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <LangVersion>latest</LangVersion>
+        <Deterministic>True</Deterministic>
+        <PlatformTarget>AnyCPU</PlatformTarget>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference ExcludeAssets="runtime" Include="Microsoft.CodeAnalysis.CSharp" Version="4.0.1" />
+    </ItemGroup>
+
+    <Target Name="CustomAfterBuild" AfterTargets="Publish">
+      <ItemGroup>
+        <_FilesToCopy Include="$(OutputPath)**\$(AssemblyName).dll" /><_FilesToCopy Include="$(OutputPath)**\$(AssemblyName).pdb" />
+      </ItemGroup>
+      <Copy SourceFiles="@(_FilesToCopy)" DestinationFolder="$(MSBuildProjectDirectory)/../.." />
+    </Target>
+
+    <ItemGroup>
+        <AdditionalFiles Include="AnalyzerReleases.Shipped.md" />
+        <AdditionalFiles Include="AnalyzerReleases.Unshipped.md" />
+    </ItemGroup>
+</Project>

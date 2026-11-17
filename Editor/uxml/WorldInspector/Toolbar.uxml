@@ -1,0 +1,10 @@
+<engine:UXML xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" editor-extension-mode="True">
+    <engine:Template name="IsRecordingToggle" src="project://database/Packages/com.breezeblockgames.hyper-tween/Editor/uxml/WorldInspector/IsRecordingToggle.uxml?fileID=9197481963319205126&amp;guid=926fa5c3ad88a514faadb99729f18440&amp;type=3#IsRecordingToggle" />
+    <engine:Template name="TweenWorldSelector" src="project://database/Packages/com.breezeblockgames.hyper-tween/Editor/uxml/WorldInspector/TweenWorldSelector.uxml?fileID=9197481963319205126&amp;guid=2cf253b388ef8034ea15d24480de59cd&amp;type=3#TweenWorldSelector" />
+    <editor:Toolbar name="Toolbar" style="align-items: center;">
+        <engine:Instance template="IsRecordingToggle" />
+        <engine:Instance template="TweenWorldSelector" />
+        <editor:ToolbarButton text="Clear All" name="ClearAllButton" />
+        <editor:ToolbarButton text="Clear Destroyed" name="ClearDestroyedButton" />
+    </editor:Toolbar>
+</engine:UXML>

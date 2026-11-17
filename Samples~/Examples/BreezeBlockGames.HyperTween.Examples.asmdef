@@ -1,0 +1,24 @@
+{
+    "name": "BreezeBlockGames.HyperTween.Examples",
+    "rootNamespace": "BreezeBlockGames.HyperTween.Examples",
+    "references": [
+        "GUID:734d92eba21c94caba915361bd5ac177",
+        "GUID:2665a8d13d1b3f18800f46e256720795",
+        "GUID:e0cd26848372d4e5c891c569017e11f1",
+        "GUID:d8b63aba1907145bea998dd612889d6b",
+        "GUID:8819f35a0fc84499b990e90a4ca1911f",
+        "GUID:804d43111bc54cd4a5a9be763921eb63",
+        "GUID:26ff7d9fd26ef73448e5bd2a4c836847",
+        "GUID:3522c34114fd1ff4e95c3a981bba4246",
+        "GUID:27e3b70e8846a0b4297b1db4dbe970bd"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

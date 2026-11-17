@@ -1,0 +1,21 @@
+{
+    "name": "BreezeBlockGames.HyperTween.UnityShared.Modules.InvokeAction",
+    "rootNamespace": "BreezeBlockGames.HyperTween.UnityShared.Modules.InvokeAction",
+    "references": [
+        "Unity.Entities",
+        "Unity.Burst",
+        "Unity.Collections",
+        "BreezeBlockGames.HyperTween.UnityShared"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "!HYPER_TWEEN_DISABLE_MODULE_INVOKE_ACTION"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -1,0 +1,49 @@
+.created {
+    border-color: rgb(70, 70, 70);
+}
+
+.played {
+    border-color: rgb(69, 115, 69);
+}
+
+.stopped {
+    border-color: rgb(193, 77, 77);
+}
+
+.destroyed {
+    opacity: 0.5
+}
+
+.tween-node {
+    background-color: rgb(44, 44, 44);
+    width: 100%;
+    height: 100%;
+    border-width: 3px;
+    border-radius: 10px;
+    padding: 10px;
+}
+
+.tween-play-node {
+    background-color: rgb(44, 50, 44);
+}
+
+.tween-stop-node {
+    background-color: rgb(50, 44, 44);
+}
+
+.tween-node Label {
+    color: rgb(196, 196, 196);
+}
+
+IsRecordingToggle #unity-checkmark {
+    background-color: rgba(0,0,0,0);
+    -unity-background-image-tint-color: white;
+    border-width: 0;
+    background-image: resource("Icons/TrackRecordButtonDisabled");
+    width: 16px;
+    height: 16px;
+}
+
+IsRecordingToggle.checked #unity-checkmark  {
+    background-image: resource("Icons/TrackRecordButtonEnabled");
+}

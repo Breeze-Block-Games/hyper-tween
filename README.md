@@ -1,6 +1,7 @@
-# hyper-tween
+# HyperTween
 
-Package Base is a repository to act as the 'base' for all Breeze Block Games packages such that they all have a
-consistent directory structure and certain functionalities by default.
+HyperTween runs ECS tweens and serial, parallel and staggered sequences, with optional Unity Transform, UI, Action, Timeline, R3 and UniTask integrations.
 
-Please see the [documentation](https://docs.breezeblock.games/hyper-tween/latest) for more info.
+- [Runtime contracts and supported builders](Documentation~/runtime-contracts.md)
+- [Source generator build and compiler regressions](SourceGenerators/Source~/README.md)
+- [Package documentation](https://docs.breezeblock.games/hyper-tween/latest)

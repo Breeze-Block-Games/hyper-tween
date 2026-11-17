@@ -1,0 +1,32 @@
+{
+    "name": "BreezeBlockGames.HyperTween.UnityShared.Tests",
+    "rootNamespace": "BreezeBlockGames.HyperTween.UnityShared.Tests",
+    "references": [
+        "BreezeBlockGames.HyperTween.UnityShared",
+        "Unity.Collections",
+        "Unity.Entities",
+        "Unity.Mathematics",
+        "Unity.Transforms",
+        "Unity.Burst",
+        "Unity.Transforms.Hybrid",
+        "Unity.Entities.Hybrid",
+        "BreezeBlockGames.HyperTween.UnityShared.Modules.Transforms",
+        "BreezeBlockGames.HyperTween.UnityShared.Modules.InvokeAction"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS",
+        "!HYPER_TWEEN_DISABLE_MODULE_TRANSFORMS",
+        "!HYPER_TWEEN_DISABLE_MODULE_INVOKE_ACTION"
+    ],
+    "versionDefines": [],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "noEngineReferences": false
+}

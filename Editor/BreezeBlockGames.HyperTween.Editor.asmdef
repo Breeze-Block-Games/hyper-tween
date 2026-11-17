@@ -1,0 +1,20 @@
+{
+    "name": "BreezeBlockGames.HyperTween.Editor",
+    "rootNamespace": "BreezeBlockGames.HyperTween.Editor",
+    "references": [
+        "BreezeBlockGames.HyperTween.UnityShared",
+        "Unity.Entities",
+        "Unity.Collections"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

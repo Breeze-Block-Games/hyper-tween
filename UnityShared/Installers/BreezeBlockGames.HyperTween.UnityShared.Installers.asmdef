@@ -2,6 +2,7 @@
     "name": "BreezeBlockGames.HyperTween.UnityShared.Installers",
     "rootNamespace": "BreezeBlockGames.HyperTween.UnityShared.Installers",
     "references": [
+        "BreezeBlockGames.HyperTween.UnityShared",
         "BreezeBlockGames.DependencyInjection.UnityShared",
         "VContainer"
     ],
@@ -11,7 +12,15 @@
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,
-    "defineConstraints": [],
-    "versionDefines": [],
+    "defineConstraints": [
+        "HYPER_TWEEN_INSTALLERS"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.breezeblockgames.dependency-injection",
+            "expression": "0",
+            "define": "HYPER_TWEEN_INSTALLERS"
+        }
+    ],
     "noEngineReferences": false
 }

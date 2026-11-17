@@ -3,17 +3,32 @@
   "version": "1.0.0",
   "displayName": "Hyper Tween",
   "description": "A tweening framework based on Unity ECS",
-  "unity": "6000.0",
-  "unityRelease": "36f1",
-  "documentationUrl": "https://github.com/Breeze-Block-Games/hyper-tween/blob/master/README.md",
-  "changelogUrl": "https://github.com/Breeze-Block-Games/hyper-tween/blob/master/CHANGELOG.md",
-  "licensesUrl": "https://github.com/Breeze-Block-Games/hyper-tween/blob/master/LICENSE.md",
+  "unity": "6000.3",
+  "unityRelease": "1f1",
+  "documentationUrl": "https://docs.breezeblock.games/hyper-tween/latest",
+  "changelogUrl": "https://github.com/Breeze-Block-Games/hyper-tween/blob/main/CHANGELOG.md",
+  "licensesUrl": "https://github.com/Breeze-Block-Games/hyper-tween/blob/main/LICENSE.md",
+  "dependencies": {
+    "com.unity.entities": "1.4.3",
+    "com.unity.burst": "1.8.26"
+  },
   "keywords": [],
   "author": {
     "name": "Breeze Block Games",
     "url": "https://github.com/Breeze-Block-Games"
   },
-  "samples": [],
+  "samples": [
+	{
+      "displayName": "Examples",
+      "description": "Examples for use in the documentation",
+      "path": "Samples~/Examples"
+    },
+    {
+      "displayName": "Polyrhythm",
+      "description": "A test bed for using HyperTween with accurate timing",
+      "path": "Samples~/Polyrhythm"
+    }
+  ],
   "devDependencies": {
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/commit-analyzer": "^13.0.1",
@@ -22,6 +37,5 @@
     "@semantic-release/release-notes-generator": "^14.1.0",
     "semantic-release": "^24.2.9",
     "semantic-release-export-data": "^1.1.1"
-  },
-  "namespace": "HyperTween"
+  }
 }

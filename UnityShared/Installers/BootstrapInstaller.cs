@@ -1,4 +1,5 @@
 using BreezeBlockGames.DependencyInjection.UnityShared;
+using BreezeBlockGames.HyperTween.UnityShared.API;
 using VContainer;
 
 namespace BreezeBlockGames.HyperTween.UnityShared.Installers
@@ -7,7 +8,7 @@ namespace BreezeBlockGames.HyperTween.UnityShared.Installers
     {
         public override void Install(IContainerBuilder builder)
         {
-            // Placeholder
+            builder.RegisterInstance(TweenCollection.Create());
         }
     }
 }

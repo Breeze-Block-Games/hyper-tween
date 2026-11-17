@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 446fe0307a1f48429bdf16829a62f92f
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - m_ViewDataDictionary: {instanceID: 0}
+  - _windowVisualTreeAsset: {fileID: 9197481963319205126, guid: ebf64aba1b2002c41ba6a1ee10eb9fce, type: 3}
+  - _additionalToolbarAsset: {fileID: 9197481963319205126, guid: 64e4cdd1b0eb4784094089041fecfe5a, type: 3}
+  - _contentVisualTreeAsset: {fileID: 9197481963319205126, guid: 3776db2efdd873147a30d474838f658a, type: 3}
+  - _styleSheetAsset: {fileID: 7433441132597879392, guid: ae644316570a5e34fb8e5fe9d719476e, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

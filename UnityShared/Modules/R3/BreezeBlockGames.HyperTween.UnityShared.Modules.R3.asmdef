@@ -1,0 +1,30 @@
+{
+    "name": "BreezeBlockGames.HyperTween.UnityShared.Modules.R3",
+    "rootNamespace": "BreezeBlockGames.HyperTween.UnityShared.Modules.R3",
+    "references": [
+        "Unity.Entities",
+        "Unity.Burst",
+        "Unity.Collections",
+        "Unity.Mathematics",
+        "BreezeBlockGames.HyperTween.UnityShared",
+        "Unity.Transforms"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "!HYPER_TWEEN_DISABLE_MODULE_R3",
+        "R3_EXISTS"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.cysharp.r3",
+            "expression": "0",
+            "define": "R3_EXISTS"
+        }
+    ],
+    "noEngineReferences": false
+}

@@ -1,0 +1,37 @@
+using BreezeBlockGames.HyperTween.UnityShared.API;
+using BreezeBlockGames.HyperTween.UnityShared.ECS.Update.Components;
+using BreezeBlockGames.HyperTween.UnityShared.TweenBuilders;
+using BreezeBlockGames.HyperTween.UnityShared.Journal.Systems;
+using Unity.Collections;
+using Unity.Transforms;
+
+namespace BreezeBlockGames.HyperTween.UnityShared.SequenceBuilders
+{
+    public struct SerialSequenceBuilder<TTweenBuilder> : ISequenceBuilder<TTweenBuilder> where TTweenBuilder : unmanaged, ITweenBuilder
+    {
+        public TweenHandle<TTweenBuilder> Build(in FixedString64Bytes name, TweenFactory<TTweenBuilder> tweenFactory, NativeList<TweenHandle> subTweens, Allocator allocator)
+        {
+            var tweenHandle = tweenFactory.CreateTween(in name);
+
+            var first = true;
+            var previousTweenHandle = tweenHandle;
+            
+            foreach (var subTween in subTweens)
+            {
+                if (first)
+                {
+                    previousTweenHandle.PlayOnPlay(subTween);
+                    first = false;
+                }
+                else
+                {
+                    previousTweenHandle.PlayOnStop(subTween);
+                }
+
+                previousTweenHandle = tweenFactory.GetBuilder(subTween);
+            }
+
+            return tweenHandle.StopOnJoin(previousTweenHandle);
+        }
+    }
+}
