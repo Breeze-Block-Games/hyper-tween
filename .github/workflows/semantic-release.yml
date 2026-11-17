@@ -1,0 +1,55 @@
+name: Semantic Release
+on:
+  workflow_call:
+    outputs:
+      version:
+        description: "Computed version string."
+        value: ${{ jobs.semantic-release.outputs.version }}
+
+jobs:
+  semantic-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      version: ${{ steps.semantic-release.outputs.new-release-version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run semantic-release
+        id: semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npx \
+            -p semantic-release \
+            -p @semantic-release/commit-analyzer \
+            -p @semantic-release/release-notes-generator \
+            -p @semantic-release/changelog \
+            -p @semantic-release/github \
+            -p @semantic-release/git \
+            -p semantic-release-export-data \
+            semantic-release
+        
+      - name: Echo Version
+        run: |
+          echo "${{ steps.semantic-release.outputs.new-release-version }}"
+        
+      - name: Cat Changelog
+        run: |
+          cat CHANGELOG.md
+          
+      - uses: actions/upload-artifact@v4
+        with:
+          name: changelog
+          path: |
+            CHANGELOG.md
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 4
